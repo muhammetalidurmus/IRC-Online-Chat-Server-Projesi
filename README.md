@@ -69,16 +69,17 @@ TCP bağlantı tabanlıdır, UDP bağlantı tabanlı değildir. TCP'de akış ko
 
 ```cpp
 socket(AF_INET, SOCK_STREAM, 0);
+
  //Bir soket oluştururken ağ protokollerini belirlemek için kullanılır.
 ```
 
 
-<span style="color:yellow;">`AF_INET`: Bir soket oluştururken ağ protokollerini belirlemek için kullanılır.</span>
+- `AF_INET`: Bir soket oluştururken ağ protokollerini belirlemek için kullanılır.
 
 
-<span style="color:yellow;">`SOCK_STREAM`: TCP soketi oluşturulacağını belirtir.</span>
+- `SOCK_STREAM`: TCP soketi oluşturulacağını belirtir.
 
-<span style="color:yellow;">`0`: Default protokol kullanılır.</span>
+- `0`: Default protokol kullanılır.
 
 
 
@@ -90,10 +91,10 @@ socket(AF_INET, SOCK_STREAM, 0);
 
 ```cpp
 int bind(int sockfd, const struct sockaddr *addr, socklen_t addrlen); 
-// fonksiyonu, bir soketi belirli bir adres ve port numarasına bağlamak için kullanılır.
+
+//Fonksiyonu, bir soketi belirli bir adres ve port numarasına bağlamak için kullanılır.
 ```
 
-`bind()` fonksiyonu, bir soketi belirli bir adres ve port numarasına bağlamak için kullanılır.
 
 - `sockfd`: Dinlemek istediğiniz soketin tanımlayıcısı (soket fd).
 
@@ -107,9 +108,11 @@ int bind(int sockfd, const struct sockaddr *addr, socklen_t addrlen);
 
 ```cpp
 listen(int sockfd, int backlog);
+
+// Fonksiyonu, bir soketi belirli bağlantı taleplerini dinlemek için kullanılan sokete dönüştürür.
 ```
 
-`listen()` fonksiyonu, bir soketi belirli bağlantı taleplerini dinlemek için kullanılan sokete dönüştürür.
+
 
 - `sockfd`: Dinlemek istediğiniz soketin tanımlayıcısı (soket fd).
 
@@ -120,10 +123,9 @@ listen(int sockfd, int backlog);
 
 
 ```cpp
-accept(int sockfd, struct sockaddr *addr, socklen_t *addrlen); 
+accept(int sockfd, struct sockaddr *addr, socklen_t *addrlen);
+// Fonksiyonu, yeni bir client bağlantısını kabul etmek için kullanılır. Bağlantıyı oluşturan clientın soket dosya tanımlayıcısını (clientSocket) döndürür.
 ```
-
-`accept()` fonksiyonu, yeni bir client bağlantısını kabul etmek için kullanılır. Bağlantıyı oluşturan clientın soket dosya tanımlayıcısını (clientSocket) döndürür.
 
 - `sockfd`: Dinlemek istediğiniz soketin tanımlayıcısı (soket fd).
 
