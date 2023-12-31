@@ -68,7 +68,8 @@ TCP bağlantı tabanlıdır, UDP bağlantı tabanlı değildir. TCP'de akış ko
 ## Kullanılan Tüm Fonksiyonlar
 
 ```cpp
-socket(AF_INET, SOCK_STREAM, 0); //Bir soket oluştururken ağ protokollerini belirlemek için kullanılır.
+socket(AF_INET, SOCK_STREAM, 0);
+ //Bir soket oluştururken ağ protokollerini belirlemek için kullanılır.
 ```
 
 
@@ -88,7 +89,8 @@ socket(AF_INET, SOCK_STREAM, 0); //Bir soket oluştururken ağ protokollerini be
 
 
 ```cpp
-int bind(int sockfd, const struct sockaddr *addr, socklen_t addrlen); // fonksiyonu, bir soketi belirli bir adres ve port numarasına bağlamak için kullanılır.
+int bind(int sockfd, const struct sockaddr *addr, socklen_t addrlen); 
+// fonksiyonu, bir soketi belirli bir adres ve port numarasına bağlamak için kullanılır.
 ```
 
 `bind()` fonksiyonu, bir soketi belirli bir adres ve port numarasına bağlamak için kullanılır.
