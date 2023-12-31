@@ -124,7 +124,8 @@ listen(int sockfd, int backlog);
 
 ```cpp
 accept(int sockfd, struct sockaddr *addr, socklen_t *addrlen);
-// Fonksiyonu, yeni bir client bağlantısını kabul etmek için kullanılır. Bağlantıyı oluşturan clientın soket dosya tanımlayıcısını (clientSocket) döndürür.
+// Fonksiyonu, yeni bir client bağlantısını kabul etmek için kullanılır. 
+//Bağlantıyı oluşturan clientın soket dosya tanımlayıcısını (clientSocket) döndürür.
 ```
 
 - `sockfd`: Dinlemek istediğiniz soketin tanımlayıcısı (soket fd).
@@ -172,7 +173,8 @@ fcntl(sock, F_SETFL, O_NONBLOCK);
 
 ```cpp
 int poll(struct pollfd *fds, nfds_t nfds, int timeout);
-//Fonksiyonu, çoklu soket girişini aynı anda takip etmek ve olayları yönetmek için kullanılır. Bir dizi soketi izleyerek belirli bir olayın gerçekleşip gerçekleşmediğini kontrol eder. 
+//Fonksiyonu, çoklu soket girişini aynı anda takip etmek ve olayları yönetmek için kullanılır.
+//Bir dizi soketi izleyerek belirli bir olayın gerçekleşip gerçekleşmediğini kontrol eder. 
 ```
 
 - `fds`: struct pollfd türünden bir dizi, izlenecek soketlerin ve beklenen olayların bilgisini içerir.
