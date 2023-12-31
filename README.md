@@ -134,85 +134,14 @@ accept(int sockfd, struct sockaddr *addr, socklen_t *addrlen);
 - `addrlen`: addr boyutunu tutar. Bu parametreyi NULL olarak belirtebilirsiniz.
 
 
-<br />
-
-
-```cpp
-#include <netinet/in.h>
-
-struct sockaddr_in {
-	short			sin_family;   // AF_INET
-	unsigned short   sin_port;	 // htons(3490)
-	struct in_addr   sin_addr;	 // see struct in_addr, below
-	char			 sin_zero[8];  // zero this if you want to
-};
-
-struct in_addr {
-	unsigned long s_addr;  // load with inet_aton()
-};
-```
-
-
-- `struct sockaddr_in`: Bu struct yapısı bir server soketi oluştururken veya bir client soketine bağlanırken kullanılan adres bilgilerini içerir. Aşağıdaki struct yapısının üyeleri de ağ adres bilgilerini temsil ederler.
-
-- `sin_family`: Adres ailesini belirtir. `AF_INET` kullanarak IPv4 adres ailesini belirtmiş olur.
-
-- `sin_addr`: IP adresini tutar. IP adresi ise `in_addr_t` türündeki `s_addr` ile temsil edilir.
-
-- `sin_port`: Port numarasını tutar. Port numarası, ağ byte sırasına dönüştürülmeden saklanır.
-
-		:exclamation: Ağ byte sırasına dönüştürmek, bellekte çok byte'lık veri türleri (örneğin, 16 bit veya 32 bit) genellikle ardışık bellek hücrelerinde saklanır. Byte sıralama düzeni, bu bellek hücrelerinin hangi sıra ile sıralandığını belirler. Bunlar Big-endian ve Little-endian olarak 2'ye ayrılır. (Dilerseniz ayrıntılı bir şekilde araştırabilirsiniz.)
-		
-		Bir veri değerini ağ byte sırasına dönüştürmek, küçük endian düzeninde tutulan bir değeri büyük endian düzenine dönüştürmeyi ifade eder. Bu genellikle ağ protokollerinde veya farklı sistemler arasında veri alışverişinde kullanılan bir standartlaştırma yöntemidir. htons() (host to network short) ve htonl() (host to network long) gibi işlevler, bir veri değerini ağ byte sırasına dönüştürmek için kullanılır.
-
-- `INADDR_ANY`: Local IP adreslerini kabul etmek için kullanılır.
-
-
-<br />
-
-
-```cpp
-int inet_pton(int af, const char *src, void *dst);
-```
-
-`inet_pton()` fonksiyonu, IPv4 veya IPv6 adreslerini metin formatından ikili formata dönüştürmek için kullanılır. "pton", "presentation to numeric" anlamına gelir.
-
-- `af`: Adres ailesini (AF_INET veya AF_INET6) belirten bir tam sayı. IPv4 için AF_INET kullanılırken, IPv6 için AF_INET6 kullanılır.
-
-- `src`: Dönüştürülmek istenen IP adresini içeren bir C-style string (null-terminated string).
-
--`dst`: Dönüştürülmüş IP adresinin hedef bellek alanını temsil eden bir pointer.
-
-
-<br />
-
-
-```cpp
-#include <string>
-
-int main() {
-	std::string str = "Merhaba";
-
-	const char* cstr = str.c_str();
-
-	// C-style karakter dizisini kullanma
-	// ...
-
-	return 0;
-}
-```
-
-`c.str()` fonksiyonu, C-style (null-terminated) bir karakter dizisi olarak döndürür. Stringin içeriğini C diline ait fonksiyonlara veya C dilinde çalışan kütüphanelere aktarmak için kullanılır.
-
 
 <br />
 
 
 ```cpp
 ssize_t recv(int sockfd, void *buf, size_t len, int flags);
+// Fonksiyonu, soketten veri almak için kullanılır. Client ve server tarafında veri alışverişi sağlar.
 ```
-
-`recv()` fonksiyonu, soketten veri almak için kullanılır. Client ve server tarafında veri alışverişi sağlar.
 
 
 - `sockfd`: Dinlemek istediğiniz soketin tanımlayıcısı (soket fd).
@@ -226,14 +155,16 @@ ssize_t recv(int sockfd, void *buf, size_t len, int flags);
 
 <br />
 
+```cpp
+fcntl(sock, F_SETFL, O_NONBLOCK);
+// Fonksiyonu, soketin fd üzerindeki dosya özelliklerini değiştirmek için kullanılır.
+```
+- `F_GETFL` Okuma işlemi yapılır. Dosya tanımlayıcısının mevcut dosya özelliklerini döndürür.
 
-`fctnl()` fonksiyonu, soketin fd üzerindeki dosya özelliklerini değiştirmek için kullanılır.
-
-- `F_GETFL`: Mevcut dosya özelliklerini alır.
+- `F_SETFL` Yazma işlemi yapılır. Dosya tanımlayıcısının dosya özelliklerini belirtilen değerlere göre değiştirir.
 
 - `O_NONBLOCK`: Engellenmeyen modda açmak için kullanılan bir dosya açma flagidir.
 
-		:exclamation: Proje özelinde fcntl() fonksiyonunu kullanacaksak sadece F_SETFL VE O_NONBLOCK flagleriyle kullanabiliyoruz bunlar dışında bir kullanım yasak.
 
 
 <br />
@@ -241,9 +172,8 @@ ssize_t recv(int sockfd, void *buf, size_t len, int flags);
 
 ```cpp
 int poll(struct pollfd *fds, nfds_t nfds, int timeout);
+//Fonksiyonu, çoklu soket girişini aynı anda takip etmek ve olayları yönetmek için kullanılır. Bir dizi soketi izleyerek belirli bir olayın gerçekleşip gerçekleşmediğini kontrol eder. 
 ```
-
-`poll()` fonksiyonu, çoklu soket girişini aynı anda takip etmek ve olayları yönetmek için kullanılır. Bir dizi soketi izleyerek belirli bir olayın gerçekleşip gerçekleşmediğini kontrol eder. 
 
 - `fds`: struct pollfd türünden bir dizi, izlenecek soketlerin ve beklenen olayların bilgisini içerir.
 	
