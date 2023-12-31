@@ -184,61 +184,8 @@ int poll(struct pollfd *fds, nfds_t nfds, int timeout);
 - `timeout`: İşlemin zaman aşımı süresini belirtir. Bu süre milisaniye cinsinden ifade edilir. Negatif değerler süresiz beklemeyi, 0 değeri anında dönüşü sağlar.
 
 
-<br />
-
-
-## Netcat Nedir?
-
-Ağ iletişimi için kullanılan bir araçtır. Açılımı "networking Swiss Army knife" olarak adlandırılır. Temel olarak, TCP veya UDP üzerinden ağ bağlantıları kurmak, veri göndermek veya almak, port dinlemek gibi işlemleri gerçekleştirebilir. Netcat, hem bir server hem de bir client olarak çalışabilir. Server modunda, belirli bir portu dinleyerek gelen bağlantıları kabul eder. Client modunda ise belirli bir hedefe bağlanır. Netcat komutları da, server veya client modunu belirlemek, bağlantıları yönetmek, veri iletmek gibi çeşitli işlemleri gerçekleştirmek için kullanılır.
-
-- `nc -l 8080` :arrow_right: 8080 portunu dinlemek için netcat'i server modunda çalıştırır.
-
-- `nc 127.0.0.1 8080` :arrow_right: Client modunda çalıştırır.
-
-- `nc 192.168.0.1 3030 < irc.txt` :arrow_right: Belirtilen ip adres ve portuna irc.txt dosyasının içeriğini gönderir.
-
-- `nc -l 3030 > irc.txt` :arrow_right: 3030 portunu dinleyerek gelen veriyi irc.txt dosyasına kaydeder.
-
 
 <br />
-
-
-## Vector Nedir?
-
-Dynamic Array yapısını temsil eder. Arraylere göre daha esnek ve güvenli bir yapı sağlar.
-
-`#include <vector` olarak kullanılır.
-
-`std::vector<T> myVector` :arrow_right: "T" vector'ün içinde depolanacak veri türünü temsil eder. Örnek:
-`std::vector<int>`
-
-Özelliklerinden biri dinamik boyuta sahip olmasıdır. Yani Vector'ün boyu otomatik olarak ayarlanır ve ihtiyaç duyuldukça büyütüp küçültüleiblir. Aynı zamanda elemanlara indeks kullanarak erişebiliriz.
-
-`push_back` :arrow_rigth: Eleman eklemek için kullanılır.
-`pop_back` :arrow_rigth: Eleman silmek için kullanılır.
-
-Vector elemanlarına döngü kullanarak veya iteratorlerle erişebiliriz.
-
-
-```cpp
-#include <iostream>
-#include <vector>
-
-int main() {
-	std::vector<int> myVector;
-
-	myVector.push_back(10);
-	myVector.push_back(20);
-	myVector.push_back(30);
-
-	for (int i = 0; i < myVector.size(); ++i) {
-		std::cout << myVector[i] << " ";
-	}
-
-	return 0;
-}
-```
-
 
 <!-- commands table -->
 ## KOMUTLAR
