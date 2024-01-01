@@ -166,23 +166,56 @@ fcntl(sock, F_SETFL, O_NONBLOCK);
 
 - `O_NONBLOCK`: Engellenmeyen modda açmak için kullanılan bir dosya açma flagidir.
 
+<br />
 
+```cpp
+int kq = kqueue();
+```
+- `kqueue` fonksiyonu, BSD tabanlı işletim sistemlerinde (örneğin, FreeBSD, macOS) olayları izlemek ve yönetmek için kullanılan bir mekanizma olan kuyruk (event queue) oluşturur. Bu kuyruk, kevent sistem çağrısı tarafından yönetilir ve farklı olay türlerini takip etmek için kullanılır.
+
+<br />
+
+```cpp
+kevent(kq, &evSet, 1, NULL, 0, NULL);
+// Sistem çağrısını kullanarak belirli bir olayı kuyruğa eklemek için kullanılır.
+```
+- kq: Olay kuyruğunun dosya tanıtıcısıdır. Bu, kqueue çağrısı ile oluşturulan bir kuyruğun dosya tanıtıcısıdır. Olaylar bu kuyruk üzerinden izlenecek ve işlenecektir.
+
+- &evSet: Bir struct kevent yapısının adresidir. Bu, kuyruğa eklenmek istenen olayı tanımlayan yapıdır. Önceki örnekte EV_SET makrosu ile doldurulan bu yapı, izlenen olayın özelliklerini içerir.
+
+- 1: changelist parametresindeki değişikliklerin sayısını belirtir. Bu durumda, sadece bir olay eklemeye çalışıyoruz, bu nedenle 1 olarak belirtilmiştir.
+
+- NULL: eventlist parametresine geri dönen olayların bilgilerini içeren bir dizi verilir. Ancak, bu örnekte geri dönen olayları işlemek istemiyoruz, bu nedenle bu parametre NULL olarak bırakılmıştır.
+
+- 0: nevents parametresinde geri dönen olayların sayısını belirtir. Bu örnekte geri dönen olayları işlemek istemediğimiz için 0 olarak bırakılmıştır.
+
+- NULL: timeout parametresidir. Bu, kevent işleminin belirli bir süre beklemesini sağlar. NULL olarak bırakıldığında, işlem olay gerçekleşene kadar bekler.
+
+Bu çağrı, belirtilen kqueue üzerinde tanımlanan olayı ekler. Eğer başarılı olursa, olay kuyruğa eklenmiş olur ve ilgili olay gerçekleştiğinde bu kuyruk kullanılarak bu olayı takip edebilir ve gerekli işlemleri gerçekleştirebilirsiniz.
 
 <br />
 
 
 ```cpp
-int poll(struct pollfd *fds, nfds_t nfds, int timeout);
-//Fonksiyonu, çoklu soket girişini aynı anda takip etmek ve olayları yönetmek için kullanılır.
-//Bir dizi soketi izleyerek belirli bir olayın gerçekleşip gerçekleşmediğini kontrol eder. 
+EV_SET(&evSet, _bot->getSocket(), EVFILT_READ, EV_ADD, 0, 0, NULL);
+// EV_SET makrosunu kullanarak struct kevent yapısını doldurur.
 ```
 
-- `fds`: struct pollfd türünden bir dizi, izlenecek soketlerin ve beklenen olayların bilgisini içerir.
-	
-- `nfds`: fds dizisinin boyutu, izlenecek soket sayısını belirtir.
-	
-- `timeout`: İşlemin zaman aşımı süresini belirtir. Bu süre milisaniye cinsinden ifade edilir. Negatif değerler süresiz beklemeyi, 0 değeri anında dönüşü sağlar.
+- `&evSet`: Bu, struct kevent yapısının adresini ifade eder. `EV_SET` makrosu, bu yapıyı doldurup kuyruğa eklemek için kullanılır.
 
+- `_bot->getSocket()`: Bu, izlenen olayın ilişkilendirildiği nesnenin tanıtıcısıdır. `_bot` nesnesinden alınan bir soket tanıtıcısıdır. Bu, izlenen olayın hangi dosya, soket veya nesne üzerinde gerçekleşeceğini belirtir.
+
+- `EVFILT_READ`: Bu, izlenen olay filtresini belirtir. `EVFILT_READ`, okuma olaylarını takip etmek için kullanılır. Yani, belirtilen soketin üzerinden okuma olayı gerçekleşirse, bu olay kuyruğa eklenir.
+
+- `EV_ADD`: Bu, izlenen olayın eklenmesini belirtir. Yani, bu olayın kuyruğa eklenmesi ve izlenmeye başlaması isteniyor. Ve `EV_DELETE`, `EV_ENABLE`, `EV_DISABLE` gibi bayrak değerleride kullanılabilir.
+
+- `0`: Bu, izlenen olayın filtre özelliklerini belirtir. Bu örnekte, bu değer sıfır olarak bırakılmıştır.
+
+- `0`: Bu, izlenen olayın veri kısmını belirtir. Bu örnekte, bu değer sıfır olarak bırakılmıştır.
+
+- `NULL`: Bu, izlenen olayla ilişkilendirilen kullanıcı verisini belirtir. Bu örnekte, herhangi bir ek kullanıcı verisi olmadığı için NULL olarak bırakılmıştır.
+
+Bu şekilde, `EV_SET` makrosu, struct kevent yapısını belirli bir olayı tanımlamak ve kuyruğa eklemek için kullanılır. Bu tanımlanan olay daha sonra kevent fonksiyonu aracılığıyla izlenmeye başlanır ve ilgili olay gerçekleştiğinde belirtilen işlemler yapılır.
 
 
 <br />
@@ -193,6 +226,7 @@ int poll(struct pollfd *fds, nfds_t nfds, int timeout);
 
 | Komut | Açıklama |
 | :-----------: | :----------- |
+| Cap | IRC protokolüne göre, bu komut sunucu ve istemci arasında yetenek (capability) müzakeresi yapmak için kullanılır. Sunucu, istemciden desteklediği özellikleri bildirmesini ister ve istemci de bu özellikleri sunucuya bildirir.  |
 | Join | Client'ın verilen kanala katılmak istediğini, her kanalın kendisi için verilen anahtarı kullandığını belirtir.  |
 | Kick | Kullanıcının bir kanaldan zorla çıkarılmasını talep etmek için kullanılabilir.  |
 | List | Her kanal hakkında bazı bilgilerle birlikte kanalların bir listesini almak için kullanılır.  |
@@ -204,6 +238,34 @@ int poll(struct pollfd *fds, nfds_t nfds, int timeout);
 | Privmsg | Kullanıcılar arasında özel mesaj göndermek ve ayrıca kanallara mesaj göndermek için kullanılır.  |
 | Quit | Bir clientın serverla olan bağlantısını sonlandırmak için kullanılır. Server bunu bir "ERROR" mesajıyla yanıtlayarak ve client bağlantısını kapatarak onaylar.  |
 | User | Yeni bir kullanıcının kullanıcı adını ve gerçek adını belirtmek için bir bağlantının başlangıcında kullanılır.  |
+| Mode | Kanalların veya kullanıcıların modlarını değiştirmek için kullanılır. Modlar, kullanıcının yetkilerini, kanalın özelliklerini ve diğer birçok özelliği belirlemek için kullanılır.   |
+
+## Mode İle Kullanılabilecek Flagler
+
+### Kullanıcı Modları:
+
+| Mod         | Açıklama                              |
+|-------------|---------------------------------------|
+| +i          | Kullanıcıyı görünmez yapar.           |
+| +w          | Wallops mesajlarını alabilme yetkisi. |
+| +s          | Sunucu notislerini alabilme yetkisi.  |
+| +o          | Kanal operatörü yapar.                |
+| +v          | Ses (voice) yetkisi verir.            |
+
+### Kanal Modları:
+
+| Mod         | Açıklama                                   |
+|-------------|--------------------------------------------|
+| +t          | Kanal konusunu değiştirmeyi engeller.     |
+| +n          | Kanala dış mesaj göndermeyi engeller.     |
+| +m          | Yalnızca sesli kullanıcıların konuşmasına izin verir. |
+| +i          | Yalnızca davet edilen kullanıcıların katılmasına izin verir. |
+| +k          | Kanala katılmak için bir anahtar belirler. |
+| +l          | Kanala katılacak kullanıcı sayısını sınırlar. |
+| +b          | Belirli kullanıcıları veya maskeleri yasaklar. |
+| +o          | Kanal operatörü tanımlar.                 |
+| +v          | Sesli kullanıcı tanımlar.                |
+| +s          | Kanalın adını gizler.                    |
 
 
 
