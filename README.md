@@ -179,17 +179,17 @@ int kq = kqueue();
 kevent(kq, &evSet, 1, NULL, 0, NULL);
 // Sistem çağrısını kullanarak belirli bir olayı kuyruğa eklemek için kullanılır.
 ```
-- kq: Olay kuyruğunun dosya tanıtıcısıdır. Bu, kqueue çağrısı ile oluşturulan bir kuyruğun dosya tanıtıcısıdır. Olaylar bu kuyruk üzerinden izlenecek ve işlenecektir.
+- `kq` Olay kuyruğunun dosya tanıtıcısıdır. Bu, kqueue çağrısı ile oluşturulan bir kuyruğun dosya tanıtıcısıdır. Olaylar bu kuyruk üzerinden izlenecek ve işlenecektir.
 
-- &evSet: Bir struct kevent yapısının adresidir. Bu, kuyruğa eklenmek istenen olayı tanımlayan yapıdır. Önceki örnekte EV_SET makrosu ile doldurulan bu yapı, izlenen olayın özelliklerini içerir.
+- `&evSet` Bir struct kevent yapısının adresidir. Bu, kuyruğa eklenmek istenen olayı tanımlayan yapıdır. Önceki örnekte EV_SET makrosu ile doldurulan bu yapı, izlenen olayın özelliklerini içerir.
 
-- 1: changelist parametresindeki değişikliklerin sayısını belirtir. Bu durumda, sadece bir olay eklemeye çalışıyoruz, bu nedenle 1 olarak belirtilmiştir.
+- `1` changelist parametresindeki değişikliklerin sayısını belirtir. Bu durumda, sadece bir olay eklemeye çalışıyoruz, bu nedenle 1 olarak belirtilmiştir.
 
-- NULL: eventlist parametresine geri dönen olayların bilgilerini içeren bir dizi verilir. Ancak, bu örnekte geri dönen olayları işlemek istemiyoruz, bu nedenle bu parametre NULL olarak bırakılmıştır.
+- `NULL` eventlist parametresine geri dönen olayların bilgilerini içeren bir dizi verilir. Ancak, bu örnekte geri dönen olayları işlemek istemiyoruz, bu nedenle bu parametre NULL olarak bırakılmıştır.
 
-- 0: nevents parametresinde geri dönen olayların sayısını belirtir. Bu örnekte geri dönen olayları işlemek istemediğimiz için 0 olarak bırakılmıştır.
+- `0` nevents parametresinde geri dönen olayların sayısını belirtir. Bu örnekte geri dönen olayları işlemek istemediğimiz için 0 olarak bırakılmıştır.
 
-- NULL: timeout parametresidir. Bu, kevent işleminin belirli bir süre beklemesini sağlar. NULL olarak bırakıldığında, işlem olay gerçekleşene kadar bekler.
+- `NULL` timeout parametresidir. Bu, kevent işleminin belirli bir süre beklemesini sağlar. NULL olarak bırakıldığında, işlem olay gerçekleşene kadar bekler.
 
 Bu çağrı, belirtilen kqueue üzerinde tanımlanan olayı ekler. Eğer başarılı olursa, olay kuyruğa eklenmiş olur ve ilgili olay gerçekleştiğinde bu kuyruk kullanılarak bu olayı takip edebilir ve gerekli işlemleri gerçekleştirebilirsiniz.
 
