@@ -30,6 +30,11 @@ Soket programlama, TCP veya UDP gibi iletişim protokollerini kullanarak veri il
 
 Özetle, soket programlama ağ üzerinde veri paylaşımı, mesajlaşma, dosya aktarımı, uzaktan erişim gibi birçok uygulama senaryosunda kullanılır.
 
+<p align="center">
+  <img src="https://user-images.githubusercontent.com/81527587/232306875-82dfffe7-8508-48ab-84b3-2f6326ebac9a.png" width="420" height="580" alt="Clients">
+</p>
+
+
 
 <br />
 
