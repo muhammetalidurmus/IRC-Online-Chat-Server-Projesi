@@ -272,5 +272,20 @@ Bu şekilde, `EV_SET` makrosu, struct kevent yapısını belirli bir olayı tan�
 | +v          | Sesli kullanıcı tanımlar.                |
 | +s          | Kanalın adını gizler.                    |
 
+## İrc Server İçin Kullanılabilecek Clientler
 
+- `HexChat`: Windows, Linux ve macOS için ücretsiz ve açık kaynaklı bir IRC istemcisidir. Geniş özellik seti ve kullanıcı dostu arayüzü ile bilinir.
 
+- `mIRC`: Windows tabanlı bir IRC istemcisidir ve özellikle Windows kullanıcıları arasında popülerdir. Kullanımı kolaydır ve geniş bir eklenti yelpazesi sunar.
+
+- `Irssi`: Linux ve UNIX sistemleri için tasarlanmış bir terminal tabanlı IRC istemcisidir. Komut satırı tabanlı olması, daha gelişmiş kullanıcılar için uygundur.
+
+- `WeeChat`: Hem terminal tabanlı hem de grafik arayüze sahip bir IRC istemcisidir. Linux, FreeBSD ve macOS gibi sistemlerde kullanılabilir.
+
+- `XChat`: Windows ve Linux için bir IRC istemcisidir. HexChat'in eski bir sürümü olarak bilinir ve hala bazı kullanıcılar tarafından tercih edilmektedir.
+
+- `Quassel IRC`: Hem masaüstü hem de bir istemci-sunucu modeli sunan bir IRC istemcisidir. Kullanıcıların sunucuyla sürekli bir bağlantı kurmasına gerek kalmadan farklı cihazlardan bağlanmalarını sağlar.
+
+- `VIrc`: Çeşitli platformlarda çalışabilen bir IRC istemcisidir ve geniş bir özellik yelpazesi sunar.
+
+- `ChatZilla`: Mozilla Firefox tarayıcısı içinde çalışan bir IRC istemcisidir. Tarayıcı tabanlı kullanıcılar için uygun bir seçenektir.
