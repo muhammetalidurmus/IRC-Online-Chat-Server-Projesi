@@ -11,7 +11,7 @@ Ağ tabanlı uygulamaların geliştirilmesi yani ağlar arasında iletişim kurm
 
 Client ve server soketleri kullanarak birbirleriyle iletişim kurarlar.
 
-Bir client ve server arasındaki iletişim şu adımlarla gerçekleşir;
+`Bir client ve server arasındaki iletişim şu adımlarla gerçekleşir;`
 
 `1.` Server soketi oluşturma: Server, belirli bir port üzerinden gelecek clientlara hizmet vereceği için bir soket oluşturur ve bir port numarası belirler.
 
