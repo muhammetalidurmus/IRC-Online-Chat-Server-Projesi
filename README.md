@@ -197,6 +197,8 @@ kevent(kq, &evSet, 1, NULL, 0, NULL);
 - `NULL` timeout parametresidir. Bu, kevent işleminin belirli bir süre beklemesini sağlar. NULL olarak bırakıldığında, işlem olay gerçekleşene kadar bekler.
 
 Bu çağrı, belirtilen kqueue üzerinde tanımlanan olayı ekler. Eğer başarılı olursa, olay kuyruğa eklenmiş olur ve ilgili olay gerçekleştiğinde bu kuyruk kullanılarak bu olayı takip edebilir ve gerekli işlemleri gerçekleştirebilirsiniz.
+
+`struct kevent` yapısının ilgili alanları şu şekildedir:
 ```cpp
 struct kevent {
     uintptr_t ident;      // Olayın tanımlayıcısı (dosya tanımlayıcısı veya diğer özel değerler)
