@@ -34,14 +34,15 @@ void Part::partChannel( Client* client, string channelName, Server* srv )
 		client->sendMessage( ":" + client->getHostName() + " 442 " + client->getNickName() + " " + channelName + " :You're not on that channel" );
 		return;
 	}
+
 	channel->removeUserFromChannel( client );
 	client->removeChannel( channel );
 
 	string message	= ":" + client->getPrefix() + " PART " + channelName + "\n";
 	channel->broadcastMessage( message, client );
 	client->sendMessage( "You left the channel " + channelName );
-	std::string leavemessage = client->getNickName() + " " + " has left the channel " + channel->getChannelName();
-	log(leavemessage);
+	//std::string leavemessage = client->getNickName() + " " + " has left the channel " + channel->getChannelName();
+	//log(leavemessage);
 
 	if ( channel->getChannelClientCount() == 0 && srv->channelExists( channelName )){
 		string channelName = channel->getChannelName();
