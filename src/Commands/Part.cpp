@@ -41,8 +41,6 @@ void Part::partChannel( Client* client, string channelName, Server* srv )
 	string message	= ":" + client->getPrefix() + " PART " + channelName + "\n";
 	channel->broadcastMessage( message, client );
 	client->sendMessage( "You left the channel " + channelName );
-	//std::string leavemessage = client->getNickName() + " " + " has left the channel " + channel->getChannelName();
-	//log(leavemessage);
 
 	if ( channel->getChannelClientCount() == 0 && srv->channelExists( channelName )){
 		string channelName = channel->getChannelName();
