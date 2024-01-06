@@ -7,7 +7,7 @@ void Cap::cap( Client* client, const vector<string> commandParts)
 		return;
 	}
 	string cap = commandParts.at(1);
-	if (cap == "LS"){
+	if (cap == "LS" || cap== "ls"){
 		client->sendMessage("/PASS\n/USER\n/NICK\n/JOIN\n/PART\n/PRIVMSG\n/NOTICE\n/KICK\n/MODE\n/QUIT\n");
 	}
 	else {
