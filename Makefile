@@ -19,6 +19,7 @@ $(OBJDIR)/%.o: $(SRCDIR)/%.cpp
 
 $(OBJDIR):
 	mkdir -p $(OBJDIR)
+	mkdir -p $(OBJDIR)/Commands
 
 $(NAME): $(OBJS)
 	$(CC) $(FLAGS) $(OBJS) -o $(NAME)
