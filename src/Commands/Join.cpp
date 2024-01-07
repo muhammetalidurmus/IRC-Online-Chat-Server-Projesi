@@ -94,6 +94,9 @@ void Join::joinChannel(Client* client, string channelName, vector<string> comman
         channel->setChannelOwner(client);
         client->setOperator(true);
         srv->addChannel(channel);
+        // Kanalı +n moduyla açmak için yazdım böylece kanal dışardan msj almayacak şekilde açılıyor.
+        channel->setNoExternalMessages(true);
+		channel->broadcastMessage("MODE " + channel->getChannelName() + " +n " + client->getNickName());
     }
 
     // İstemciyi kanala kat
