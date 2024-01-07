@@ -2,7 +2,8 @@
 
 Server* Server::ins = NULL;
 
-// Create a file descriptor for epoll(linux) or kqueue(BSD) to listen for requests.
+// Singleton tasarım deseni kullanılarak tek bir Server nesnesinin oluşturulması sağlanır.
+// Bu fonksiyon, Server sınıfının örneklemesini döndürür veya oluşturur.
 Server::Server(int serverSocketFamily, int serverSocketProtocol, int serverSocketPort, string serverName)
 	: _serverSocketFD(-1),
 	_serverSocketFamily(serverSocketFamily),
@@ -12,20 +13,31 @@ Server::Server(int serverSocketFamily, int serverSocketProtocol, int serverSocke
 	_serverPass(""),
 	_bot(NULL)
 {
+	// Ctrl+C sinyali alındığında tetiklenecek sinyal işleyici atanır.
 	signal(SIGINT, signalHandler);
-	Server::setInstance(this);
-	memset(&serverAddress, 0, sizeof(serverAddress));
-	memset(&serverAddress6, 0, sizeof(serverAddress6));
+	Server::setInstance(this);	// Singleton
 
+	// epoll(linux) veya kqueue(BSD) için istemci isteklerini dinlemek için bir dosya tanımlayıcısı oluşturulur.
+	memset(&serverAddress, 0, sizeof(serverAddress));
+#if defined(__linux__)
+	epollFd = epoll_create1(0);
+	if (epollFd == -1) {
+	}
+#elif defined(__APPLE__) || defined(__MACH__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined (__NetBSD__)
 	kq = kqueue();
-	if (kq == -1)
-		ErrorLogger( FAILED_SOCKET_POLL, __FILE__, __LINE__, true );
+	if (kq == -1) {
+	}
+#endif
 }
 
+// Server nesnesinin yıkıcısı.
+// Ayrıca, Server sınıfının tek bir örneğini tutan işaretçi silinir ve bellek temizlenir.
 Server::~Server()
 {
 	delete Server::ins;
 	Server::ins = NULL;
+
+	// Tüm istemciler ve kanallar bellekten temizlenir.
 	for (map<int, Client*>::iterator it = _clients.begin(); it != _clients.end(); ++it) {
 		delete it->second;
 	}
@@ -35,106 +47,118 @@ Server::~Server()
 	}
 	_channels.clear();
 
+	// Server soketi kapatılır.
 	if (_serverSocketFD != -1)
 		close(_serverSocketFD);
-
+		
+#if defined(__linux__)
+	if (epollFd != -1)
+	{
+		close(epollFd);
+	}
+#elif defined(__APPLE__) || defined(__MACH__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined (__NetBSD__)
 	if (kq != -1)
+	{
 		close(kq);
-
-	if (_bot != NULL)
+	}
+	if (_bot != NULL){
 		delete _bot;
+	}
+#endif
+
 }
-// Creation of the server socket. The return value is the file identifier of the socket.
-// NONBLOCK ->Setting the socket to non-blocking. That is, to read and write to the socket without blocking.
-// reuse ->Setting the socket to be reusable.
-// reuse -> This is necessary so that the server can be restarted immediately after shutdown.
+// Server soketini oluşturur.
+// Soketin dosya tanımlayıcısını döndürür.
+// NONBLOCK -> Soketi engellemeyen (non-blocking) modda ayarlar, yani soketi bloklamadan okuma ve yazma işlemlerini gerçekleştirebiliriz.
+// reuse -> Soketi yeniden kullanılabilir (reusable) hale getirir.
+// reuse -> Bu, sunucunun hemen kapatıldıktan sonra yeniden başlatılabilmesi için gereklidir.
 void Server::socketStart()
 {
-	_serverSocketFD = socket( _serverSocketFamily, _serverSocketProtocol, 0 );
+	// Soket oluşturulur.
+	_serverSocketFD = socket(_serverSocketFamily, _serverSocketProtocol, 0);
 
-	if ( _serverSocketFD == -1 )
-		ErrorLogger( FAILED_SOCKET, __FILE__, __LINE__ );
+	if (_serverSocketFD == -1)
+		ErrorLogger(FAILED_SOCKET, __FILE__, __LINE__);
 
-	if ( fcntl(_serverSocketFD, F_SETFL, O_NONBLOCK) == -1 )
+	// Soketi non-blocking moda ayarlar.
+	if (fcntl(_serverSocketFD, F_SETFL, O_NONBLOCK) == -1)
 	{
 		close(_serverSocketFD);
-		ErrorLogger( FAILED_SOCKET_NONBLOCKING, __FILE__, __LINE__ );
+		ErrorLogger(FAILED_SOCKET_NONBLOCKING, __FILE__, __LINE__);
 	}
+
+	// Soketin tekrar kullanılabilir olmasını sağlar.
 	int reuse = 1;
-	if ( setsockopt(_serverSocketFD, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(int)) == -1 )
+	if (setsockopt(_serverSocketFD, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(int)) == -1)
 	{
 		close(_serverSocketFD);
-		ErrorLogger( FAILED_SOCKET_OPTIONS, __FILE__, __LINE__ );
+		ErrorLogger(FAILED_SOCKET_OPTIONS, __FILE__, __LINE__);
 	}
 }
-// Providing the necessary connection arguments for the socket
+
+// Soketin gerekli bağlantı argümanlarını tanımlar.
 void Server::socketInit()
 {
-	switch ( _serverSocketFamily )
+	switch (_serverSocketFamily)
 	{
 		case AF_INET: // IPv4
 			serverAddress.sin_addr.s_addr = INADDR_ANY;
 			serverAddress.sin_family = _serverSocketFamily;
-			serverAddress.sin_port = htons( _serverSocketPort );
+			serverAddress.sin_port = htons(_serverSocketPort);
 			break;
-		case AF_INET6: // IPv6
-			serverAddress6.sin6_addr = in6addr_any;
-			serverAddress6.sin6_family = _serverSocketFamily;
-			serverAddress6.sin6_port = htons( _serverSocketPort );
-			break;
+			
 		default:
 			close(_serverSocketFD);
-			ErrorLogger( FAILED_SOCKET_DOMAIN, __FILE__, __LINE__ );
+			ErrorLogger(FAILED_SOCKET_DOMAIN, __FILE__, __LINE__);
 	}
 }
-// AF_INET - AF_INET6 Binding the address of the server socket for IPv4 or IPv6
-// In short, it specifies from which IP address and port the server will listen for requests.
+// AF_INET Bağlantı noktasını belirtmek için server soketinin adresini bağlar.
 void Server::socketBind()
 {
-	switch (_serverSocketFamily)
-	{
-		case AF_INET:
-		{
-			if ( ::bind(_serverSocketFD, reinterpret_cast<struct sockaddr *>(&serverAddress), sizeof(serverAddress)) == -1 )
+
+			if (::bind(_serverSocketFD, reinterpret_cast<struct sockaddr*>(&serverAddress), sizeof(serverAddress)) == -1)
 			{
 				close(_serverSocketFD);
 				ErrorLogger(FAILED_SOCKET_BIND, __FILE__, __LINE__);
 			}
-			break;
-		}
-		case AF_INET6:
-		{
-			if ( ::bind(_serverSocketFD, reinterpret_cast<struct sockaddr *>(&serverAddress6), sizeof(serverAddress6)) == -1 )
-			{
-				close(_serverSocketFD);
-				ErrorLogger(FAILED_SOCKET_BIND, __FILE__, __LINE__);
-			}
-			break;
-		}
-	}
+
 }
-// listen -> Listening on the server socket
-// In short, the server starts listening for requests.
-// epool-kqueueListening on the server socket with epoll or kqueue
-// In short, for multi-client support.
-// EPOLLIN-> Readable data is available
-// EVFILT_READ-> Readable data is available
+
+// listen -> Sunucu soketi üzerinde dinleniyor
+// Kısacası, sunucu istekleri dinlemeye başlar.
+// epoll veya kqueue ile dinleniyor, çoklu istemci desteği için.
+// EPOLLIN -> Okunabilir veri mevcut
+// EVFILT_READ -> Okunabilir veri mevcut
 void Server::socketListen()
 {
-	if ( listen(_serverSocketFD, BACKLOG_SIZE) == -1 ){
+	if ( listen(_serverSocketFD, BACKLOG_SIZE) == -1 )
+	{
 		close(_serverSocketFD);
 		ErrorLogger(FAILED_SOCKET_LISTEN, __FILE__, __LINE__);
 	}
+#if defined(__linux__)
+	struct epoll_event ev;
+	ev.events = EPOLLIN;
+	ev.data.fd = _serverSocketFD;
 
+	if (epoll_ctl(epollFd, EPOLL_CTL_ADD, _serverSocketFD, &ev) == -1)
+	{
+		perror("epoll_ctl: server socket");
+	}
+#elif defined(__APPLE__) || defined(__MACH__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined (__NetBSD__)
 	struct kevent evSet;
 	EV_SET(&evSet, _serverSocketFD, EVFILT_READ, EV_ADD, 0, 0, NULL);
 
 	if (kevent(kq, &evSet, 1, NULL, 0, NULL) == -1)
+	{
 		perror("kevent: server socket");
+	}
+#endif
 }
-// Accepting a new client connection
-// Receives a new client connection and returns the file descriptor of the new socket.
-// EPOLLET -> Edge Triggered: The event is triggered only when the state of the socket changes.
+
+// Yeni bir istemci bağlantısını kabul eder.
+// Yeni bir istemci bağlantısını alır ve yeni soketin dosya tanımlayıcısını döndürür.
+// EPOLLET -> Edge Triggered: Olay, soketin durumu değiştiğinde yalnızca tetiklenir.
 int Server::socketAccept()
 {
 	struct sockaddr_storage clientAddress;
@@ -144,34 +168,44 @@ int Server::socketAccept()
 
 	if (clientSocketFD < 0)
 	{
-		if (errno == EAGAIN || errno == EWOULDBLOCK){}
+		if (errno == EAGAIN || errno == EWOULDBLOCK)
+		{
+		}
 		else
+		{
 			ErrorLogger(FAILED_SOCKET_ACCEPT, __FILE__, __LINE__, true);
+		}
 	}
+#if defined(__linux__)
+	struct epoll_event event;
+	event.data.fd = clientSocketFD;
+	event.events = EPOLLIN | EPOLLET;
+
+	if (epoll_ctl(epollFd, EPOLL_CTL_ADD, clientSocketFD, &event) == -1)
+	{
+		close(clientSocketFD);
+		ErrorLogger(FAILED_SOCKET_EPOLL_CTL, __FILE__, __LINE__);
+	}
+#elif defined(__APPLE__) || defined(__MACH__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined (__NetBSD__)
 	struct kevent evSet;
 	EV_SET(&evSet, clientSocketFD, EVFILT_READ, EV_ADD, 0, 0, NULL);
 
-	if (kevent(kq, &evSet, 1, NULL, 0, NULL) == -1){
+	if (kevent(kq, &evSet, 1, NULL, 0, NULL) == -1)
+	{
 		close(clientSocketFD);
 		ErrorLogger(FAILED_SOCKET_KQUEUE_KEVENT, __FILE__, __LINE__);
 	}
+#endif
 
 	char hostname[NI_MAXHOST];
-	if (_serverSocketFamily == AF_INET){
-		if (inet_ntop(AF_INET, &(((struct sockaddr_in *)&clientAddress)->sin_addr), hostname, sizeof(hostname)) == NULL)
-			ErrorLogger(FAILED_SOCKET_GETADDRINFO, __FILE__, __LINE__, true);
-	}
-	else
+	if (inet_ntop(AF_INET, &(((struct sockaddr_in *)&clientAddress)->sin_addr), hostname, sizeof(hostname)) == NULL)
 	{
-		if (inet_ntop(AF_INET6, &(((struct sockaddr_in *)&clientAddress)->sin_addr), hostname, sizeof(hostname)) == NULL)
-			ErrorLogger(FAILED_SOCKET_GETADDRINFO, __FILE__, __LINE__, true);
-		}
+		ErrorLogger(FAILED_SOCKET_GETADDRINFO, __FILE__, __LINE__, true);
+	}
 
 	Client* client = NULL;
-	if (clientAddress.ss_family == AF_INET)
-		client = new Client(clientSocketFD, ntohs(((struct sockaddr_in*)&clientAddress)->sin_port), hostname, _serverName);
-	else if (clientAddress.ss_family == AF_INET6)
-		client = new Client(clientSocketFD, ntohs(((struct sockaddr_in6*)&clientAddress)->sin6_port), hostname, _serverName);
+
+	client = new Client(clientSocketFD, ntohs(((struct sockaddr_in*)&clientAddress)->sin_port), hostname, _serverName);
 
 	_clients.insert(std::make_pair(clientSocketFD, client));
 
@@ -184,9 +218,9 @@ int Server::socketAccept()
 
 	return clientSocketFD;
 }
-// Listen for existing connections and accept new connections with `epoll` or `kqueue`.
-// New Client connect and check MAX CLIENTS
-// Bot is created and listening.
+// Mevcut bağlantıları dinler ve yeni bağlantıları `epoll` veya `kqueue` ile kabul eder.
+// Yeni istemci bağlanır ve maksimum istemci sayısını kontrol eder.
+// Bot oluşturulur ve dinlenir.
 void Server::serverRun()
 {
 	socketStart();
@@ -197,24 +231,58 @@ void Server::serverRun()
 	try
 	{
 		_bot = new Bot("localhost", _serverSocketPort, _serverPass);
+#if defined(__linux__)
+		struct epoll_event ev;
+		ev.events = EPOLLIN;
+		ev.data.fd = _bot->getSocket();
+
+		if (epoll_ctl(epollFd, EPOLL_CTL_ADD, _bot->getSocket(), &ev) == -1)
+		{
+			perror("epoll_ctl: Bot socket");
+		}
+#elif defined(__APPLE__) || defined(__MACH__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined (__NetBSD__)
 		struct kevent evSet;
 		EV_SET(&evSet, _bot->getSocket(), EVFILT_READ, EV_ADD, 0, 0, NULL);
 
 		if (kevent(kq, &evSet, 1, NULL, 0, NULL) == -1)
+		{
 			perror("kevent: Bot socket");
+		}
+#endif
 	}
 	catch (const std::exception &e)
 	{
+		// Bot oluşturulamazsa, hata mesajı yazdırılır.
 		delete _bot;
 		_bot = NULL;
 		write(STDOUT_FILENO, e.what(), strlen(e.what()));
 	}
+
+	// Ana döngü, kqueue ile olayları dinler.
 	while (true)
 	{
+
+#if defined(__linux__)
+		struct epoll_event events[MAX_CLIENTS];
+		int n = epoll_wait(epollFd, events, MAX_CLIENTS, -1);
+		for (int i = 0; i < n; i++) {
+			if (events[i].data.fd == _serverSocketFD) {
+				int clientFD = socketAccept();
+				if (clientFD != -1) {
+					// Maksimum istemci sayısını kontrol et.
+					// Eğer maksimum sayıya ulaşılmışsa bağlantıyı kapat.
+				}
+			} else {
+				if (events[i].events & EPOLLIN) {
+					handleClient(events[i].data.fd);
+				}
+			}
+		}
+#elif defined(__APPLE__) || defined(__MACH__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined (__NetBSD__)
 		struct kevent evList[MAX_CLIENTS];
 		int n = kevent(kq, NULL, 0, evList, MAX_CLIENTS, NULL);
 		for (int i = 0; i < n; i++) {
-			if (static_cast<int>(evList[i].ident) == _serverSocketFD) {
+			if (evList[i].ident == (uintptr_t)_serverSocketFD) {
 				int clientFD = socketAccept();
 				if (clientFD != -1) {
 				}
@@ -224,5 +292,6 @@ void Server::serverRun()
 				}
 			}
 		}
+#endif
 	}
 }

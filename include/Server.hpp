@@ -5,7 +5,12 @@
 #include <sys/socket.h>
 #include <netdb.h>
 #include <arpa/inet.h>
+#if defined(__linux__)
+#include <sys/epoll.h>
+#endif
+#if defined(__APPLE__) || defined(__MACH__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined (__NetBSD__)
 #include <sys/event.h>
+#endif
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdio.h>
@@ -30,9 +35,9 @@ class Server
 {
 	private:
 		int _serverSocketFD;
-		const int _serverSocketFamily;
-		const int _serverSocketProtocol;
-		const int _serverSocketPort;
+		const int _serverSocketFamily; // IPV4 V6 etc..
+		const int _serverSocketProtocol; // TCP/IP - UDP
+		const int _serverSocketPort; // 1234 2345 etc..
 		string _serverName;
 		string	_serverPass;
 
@@ -40,11 +45,13 @@ class Server
 		static Server *ins;
 
 		struct sockaddr_in serverAddress;
-		struct sockaddr_in6 serverAddress6;
 
 
+#if defined(__linux__)
+		int epollFd;
+#elif defined(__APPLE__) || defined(__MACH__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined (__NetBSD__)
 		int kq;
-
+#endif
 		map<int, Client> clientBuffers;
 		map<int, Client*> _clients;
 		map<string, Channel*> _channels;

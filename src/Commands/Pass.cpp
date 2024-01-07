@@ -1,21 +1,35 @@
 #include "../../include/Commands.hpp"
 
-void Pass::pass( Client* client, const vector<string> commandParts, Server* srv)
+// PASS komutunu işleyen fonksiyon
+void Pass::pass(Client *client, const vector<string> commandParts, Server *srv)
 {
-	if (client->isRegistered() || client->getUserAuth() || client->getIsPass()){
-		client->sendReply(ERR_ALREADYREGISTERED(client->getNickName()));
-		return ;
-	}
-	if (commandParts.size() < 2) {
-		client->sendReply(ERR_NEEDMOREPARAMS(client->getNickName(), "PASS"));
-		return;
-	}
+    // Eğer kullanıcı zaten kayıtlı veya kimlik doğrulama yapıldıysa veya PASS komutu zaten alındıysa hata mesajı gönder
+    if (client->isRegistered() || client->getUserAuth() || client->getIsPass())
+    {
+        client->sendReply(ERR_ALREADYREGISTERED(client->getNickName()));
+        return;
+    }
 
-	string passw = commandParts.at(1);
-	if (!srv->verifySrvPass(passw)){
-		client->sendMessage("Access denied!");
-		return;
-	}
-	client->setPass(true);
-	client->sendMessage("Password accepted!");
+    // Komut parametreleri yetersizse hata mesajı gönder
+    if (commandParts.size() < 2)
+    {
+        client->sendReply(ERR_NEEDMOREPARAMS(client->getNickName(), "PASS"));
+        return;
+    }
+
+    // Komutun ikinci parçasını al
+    string passw = commandParts.at(1);
+
+    // Sunucu şifresini doğrula
+    if (!srv->verifySrvPass(passw))
+    {
+        // Şifre doğrulanamazsa erişim reddedildiğine dair mesaj gönder
+        client->sendMessage("Access denied!");
+        return;
+    }
+
+    // Kullanıcıya PASS komutunun alındığına dair işareti koy
+    client->setPass(true);
+    // Kullanıcıya şifrenin kabul edildiğine dair mesaj gönder
+    client->sendMessage("Password accepted!");
 }
