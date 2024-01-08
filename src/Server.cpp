@@ -19,15 +19,11 @@ Server::Server(int serverSocketFamily, int serverSocketProtocol, int serverSocke
 
 	// epoll(linux) veya kqueue(BSD) için istemci isteklerini dinlemek için bir dosya tanımlayıcısı oluşturulur.
 	memset(&serverAddress, 0, sizeof(serverAddress));
-#if defined(__linux__)
+
 	epollFd = epoll_create1(0);
 	if (epollFd == -1) {
 	}
-#elif defined(__APPLE__) || defined(__MACH__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined (__NetBSD__)
-	kq = kqueue();
-	if (kq == -1) {
-	}
-#endif
+
 }
 
 // Server nesnesinin yıkıcısı.
@@ -50,21 +46,14 @@ Server::~Server()
 	// Server soketi kapatılır.
 	if (_serverSocketFD != -1)
 		close(_serverSocketFD);
-		
-#if defined(__linux__)
+
 	if (epollFd != -1)
 	{
 		close(epollFd);
 	}
-#elif defined(__APPLE__) || defined(__MACH__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined (__NetBSD__)
-	if (kq != -1)
-	{
-		close(kq);
-	}
 	if (_bot != NULL){
 		delete _bot;
 	}
-#endif
 
 }
 // Server soketini oluşturur.
@@ -136,7 +125,7 @@ void Server::socketListen()
 		close(_serverSocketFD);
 		ErrorLogger(FAILED_SOCKET_LISTEN, __FILE__, __LINE__);
 	}
-#if defined(__linux__)
+
 	struct epoll_event ev;
 	ev.events = EPOLLIN;
 	ev.data.fd = _serverSocketFD;
@@ -145,15 +134,6 @@ void Server::socketListen()
 	{
 		perror("epoll_ctl: server socket");
 	}
-#elif defined(__APPLE__) || defined(__MACH__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined (__NetBSD__)
-	struct kevent evSet;
-	EV_SET(&evSet, _serverSocketFD, EVFILT_READ, EV_ADD, 0, 0, NULL);
-
-	if (kevent(kq, &evSet, 1, NULL, 0, NULL) == -1)
-	{
-		perror("kevent: server socket");
-	}
-#endif
 }
 
 // Yeni bir istemci bağlantısını kabul eder.
@@ -192,7 +172,7 @@ int Server::socketAccept()
 		ErrorLogger(FAILED_SOCKET_OPTIONS, __FILE__, __LINE__);
 	}
 
-#if defined(__linux__)
+
 	struct epoll_event event;
 	event.data.fd = clientSocketFD;
 	event.events = EPOLLIN | EPOLLET;
@@ -202,16 +182,6 @@ int Server::socketAccept()
 		close(clientSocketFD);
 		ErrorLogger(FAILED_SOCKET_EPOLL_CTL, __FILE__, __LINE__);
 	}
-#elif defined(__APPLE__) || defined(__MACH__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined (__NetBSD__)
-	struct kevent evSet;
-	EV_SET(&evSet, clientSocketFD, EVFILT_READ, EV_ADD, 0, 0, NULL);
-
-	if (kevent(kq, &evSet, 1, NULL, 0, NULL) == -1)
-	{
-		close(clientSocketFD);
-		ErrorLogger(FAILED_SOCKET_KQUEUE_KEVENT, __FILE__, __LINE__);
-	}
-#endif
 
 	char hostname[NI_MAXHOST];
 	if (inet_ntop(AF_INET, &(((struct sockaddr_in *)&clientAddress)->sin_addr), hostname, sizeof(hostname)) == NULL)
@@ -247,7 +217,7 @@ void Server::serverRun()
 	try
 	{
 		_bot = new Bot("localhost", _serverSocketPort, _serverPass);
-#if defined(__linux__)
+
 		struct epoll_event ev;
 		ev.events = EPOLLIN;
 		ev.data.fd = _bot->getSocket();
@@ -256,15 +226,7 @@ void Server::serverRun()
 		{
 			perror("epoll_ctl: Bot socket");
 		}
-#elif defined(__APPLE__) || defined(__MACH__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined (__NetBSD__)
-		struct kevent evSet;
-		EV_SET(&evSet, _bot->getSocket(), EVFILT_READ, EV_ADD, 0, 0, NULL);
 
-		if (kevent(kq, &evSet, 1, NULL, 0, NULL) == -1)
-		{
-			perror("kevent: Bot socket");
-		}
-#endif
 	}
 	catch (const std::exception &e)
 	{
@@ -277,8 +239,6 @@ void Server::serverRun()
 	// Ana döngü, kqueue ile olayları dinler.
 	while (true)
 	{
-
-#if defined(__linux__)
 		struct epoll_event events[MAX_CLIENTS];
 		int n = epoll_wait(epollFd, events, MAX_CLIENTS, -1);
 		for (int i = 0; i < n; i++) {
@@ -294,20 +254,5 @@ void Server::serverRun()
 				}
 			}
 		}
-#elif defined(__APPLE__) || defined(__MACH__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined (__NetBSD__)
-		struct kevent evList[MAX_CLIENTS];
-		int n = kevent(kq, NULL, 0, evList, MAX_CLIENTS, NULL);
-		for (int i = 0; i < n; i++) {
-			if (evList[i].ident == (uintptr_t)_serverSocketFD) {
-				int clientFD = socketAccept();
-				if (clientFD != -1) {
-				}
-			} else {
-				if (evList[i].filter == EVFILT_READ) {
-					handleClient(evList[i].ident);
-				}
-			}
-		}
-#endif
 	}
 }
