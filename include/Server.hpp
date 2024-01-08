@@ -5,12 +5,7 @@
 #include <sys/socket.h>
 #include <netdb.h>
 #include <arpa/inet.h>
-#if defined(__linux__)
 #include <sys/epoll.h>
-#endif
-#if defined(__APPLE__) || defined(__MACH__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined (__NetBSD__)
-#include <sys/event.h>
-#endif
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdio.h>
