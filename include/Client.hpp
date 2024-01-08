@@ -2,14 +2,8 @@
 #define CLIENT_HPP
 
 #include <sys/socket.h>
-#if defined(__linux__)
 #include <sys/epoll.h>
 #include <algorithm>
-#endif
-#if defined(__APPLE__) || defined(__MACH__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined (__NetBSD__)
-#include <sys/event.h>
-#endif
-
 #include <string>
 #include <vector>
 #include <iostream>
