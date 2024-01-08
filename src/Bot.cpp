@@ -106,6 +106,9 @@ void Bot::processMessage(const string &msg)
 				timeinfo = localtime(&rawtime);
 				sendMsg(senderNick, asctime(timeinfo));
 			}
+
+			if (msg.find("amk") != string::npos)
+				sendMsg(senderNick, "Saygılı ol lütfen  " + senderNick + "!");
 		}
 	}
 }
@@ -113,10 +116,7 @@ void Bot::processMessage(const string &msg)
 // Kanala mesaj gönderen fonksiyon
 void Bot::sendMsg(const string &channel, const string &message)
 {
-	const string RED = "\x03";
-	const string RESET = "\x03";
-	string coloredMessage = RED + message + RESET;
-	string fullMessage = "PRIVMSG " + channel + " :" + coloredMessage + "\r\n";
+	string fullMessage = "PRIVMSG " + channel + " :" + message + "\r\n";
 	send(sock, fullMessage.c_str(), fullMessage.length(), 0);
 }
 
