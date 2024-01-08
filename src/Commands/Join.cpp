@@ -11,12 +11,12 @@ void Join::join(Client* client, vector<string> commandParts, Server* srv)
         return;
     }
 
-    // Oda adını atama yapar.
-    string oda = commandParts.at(1);
+     // Oda adını atama yapar.
+    string channel = commandParts.at(1);
 
     // Eğer oda adı varsa oda açma fonksiyonuna gönderir.
-    if (!oda.empty())
-        joinChannel(client, oda, commandParts, srv);
+    if (!channel.empty())
+        joinChannel(client, channel, commandParts, srv);
         
 }
 
