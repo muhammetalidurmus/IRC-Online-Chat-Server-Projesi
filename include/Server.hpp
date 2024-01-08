@@ -41,12 +41,8 @@ class Server
 
 		struct sockaddr_in serverAddress;
 
-
-#if defined(__linux__)
 		int epollFd;
-#elif defined(__APPLE__) || defined(__MACH__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined (__NetBSD__)
-		int kq;
-#endif
+
 		map<int, Client> clientBuffers;
 		map<int, Client*> _clients;
 		map<string, Channel*> _channels;
