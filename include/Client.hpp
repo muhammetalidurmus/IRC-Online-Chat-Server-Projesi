@@ -117,7 +117,6 @@ public:
 	void leave();
 	void join( Channel* channel );
 	void removeChannel( Channel* channel );
-	void setModeClient(Client* client, Client* target, const string& mode );
 };
 
 #endif
