@@ -176,6 +176,22 @@ int Server::socketAccept()
 			ErrorLogger(FAILED_SOCKET_ACCEPT, __FILE__, __LINE__, true);
 		}
 	}
+
+	// Soketi non-blocking moda ayarlar.
+	if (fcntl(clientSocketFD, F_SETFL, O_NONBLOCK) == -1)
+	{
+		close(clientSocketFD);
+		ErrorLogger(FAILED_SOCKET_NONBLOCKING, __FILE__, __LINE__);
+	}
+
+	// Soketin tekrar kullanılabilir olmasını sağlar.
+	int reuse = 1;
+	if (setsockopt(clientSocketFD, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(int)) == -1)
+	{
+		close(clientSocketFD);
+		ErrorLogger(FAILED_SOCKET_OPTIONS, __FILE__, __LINE__);
+	}
+
 #if defined(__linux__)
 	struct epoll_event event;
 	event.data.fd = clientSocketFD;
