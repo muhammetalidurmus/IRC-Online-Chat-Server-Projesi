@@ -90,13 +90,9 @@ void Server::clientDisconnect(int clientSocketFD)
         ostringstream messageStreamDisconnect;
         messageStreamDisconnect << "Client " << it->second->getNickName() << " has disconnected.";
         log(messageStreamDisconnect.str());
-#if defined(__linux__)
+
         epoll_ctl(epollFd, EPOLL_CTL_DEL, clientSocketFD, NULL);
-#elif defined(__APPLE__) || defined(__MACH__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined (__NetBSD__)
-        struct kevent evSet;
-        EV_SET(&evSet, clientSocketFD, EVFILT_READ, EV_DELETE, 0, 0, NULL);
-        kevent(kq, &evSet, 1, NULL, 0, NULL);
-#endif
+
      // İstemci soketi kapatılır ve bellekten temizlenir.
         close(clientSocketFD);
         delete it->second;
@@ -157,15 +153,9 @@ void Server::shutdownSrv()
 		_bot = NULL;
 	}
 
-#if defined(__linux__)
 	if (epollFd != -1) {
 		close(epollFd);
  	}
-#elif defined(__APPLE__) || defined(__MACH__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__NetBSD__)
-	if (kq != -1) {
-		close(kq);
-	}
-#endif
 	// Bellekte sızıntı kontrolü yapılır.
 	system("leaks ircserv");
 	string outmessage2 = "Sunucu kapatıldı.\n";
