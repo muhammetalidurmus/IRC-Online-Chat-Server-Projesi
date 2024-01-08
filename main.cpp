@@ -18,7 +18,7 @@ int main(int argc, char *argv[])
 	std::string password = argv[2];
 
 	try {
-		Server	srv(AF_INET, SOCK_STREAM, port, "YAHAAK! IRC Server");
+		Server	srv(AF_INET, SOCK_STREAM, port, "Gariban İRC");
 		srv.setSrvPass(password); // Şifreyi ayarlaC
 		srv.serverRun();
 	}
