@@ -11,22 +11,13 @@ void Join::join(Client* client, vector<string> commandParts, Server* srv)
         return;
     }
 
-    // Kanal adlarını içeren dize
-    string channels = commandParts.at(1);
+    // Oda adını atama yapar.
+    string oda = commandParts.at(1);
 
-    // Eğer sadece bir kanal varsa
-    if (channels.find(',') == string::npos)
-        joinChannel(client, channels, commandParts, srv);
-    else
-    {
-        // Virgülle ayrılmış kanal adlarını işle
-        istringstream iss(channels);
-        string channelName;
-        while (getline(iss, channelName, ','))
-        {
-            joinChannel(client, channelName, commandParts, srv);
-        }
-    }
+    // Eğer oda adı varsa oda açma fonksiyonuna gönderir.
+    if (!oda.empty())
+        joinChannel(client, oda, commandParts, srv);
+        
 }
 
 // Join sınıfının joinChannel fonksiyonu
