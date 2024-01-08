@@ -248,7 +248,10 @@ void Server::serverRun()
 					// Maksimum istemci sayısını kontrol et.
 					// Eğer maksimum sayıya ulaşılmışsa bağlantıyı kapat.
 				}
-			} else {
+			} 
+			else 
+			{
+				
 				if (events[i].events & EPOLLIN) {
 					handleClient(events[i].data.fd);
 				}
