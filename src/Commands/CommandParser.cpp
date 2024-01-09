@@ -98,7 +98,14 @@ void CommandParser::handleCommand(Client *client, vector<string> commandParts, S
     else if (commandParts.at(0) == "/NICK" || commandParts.at(0) == "NICK")
         Nick::nick(client, commandParts, srv);
     else if ((commandParts.at(0) == "/USER" || commandParts.at(0) == "USER") && client->getIsPass())
-        User::user(client, commandParts, srv);
+        {
+            if(!client->getNickName().empty())
+            User::user(client, commandParts, srv);
+            else
+            client->sendMessage("firstly enter nickname");
+               
+        }
+
     else if (client->getUserAuth())
     {
         if (commandParts.at(0) == "/PRIVMSG" || commandParts.at(0) == "PRIVMSG")
@@ -113,10 +120,6 @@ void CommandParser::handleCommand(Client *client, vector<string> commandParts, S
             Mode::mode(client, commandParts, srv);
         else if (commandParts.at(0) == "/KICK" || commandParts.at(0) == "KICK")
             Kick::kick(client, commandParts, srv);
-        else if (commandParts.at(0) == "/NOTICE" || commandParts.at(0) == "NOTICE")
-            Notice::notice(client, commandParts, srv);
-        else if (commandParts.at(0) == "WHO")
-            return;
         else
         {
             client->sendMessage("Unknown command");
