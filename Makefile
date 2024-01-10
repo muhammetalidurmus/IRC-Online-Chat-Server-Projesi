@@ -1,35 +1,34 @@
-NAME = ircserv
-CC = g++
-FLAGS = -Wall -Wextra -Werror -std=c++98 -g
+NAME		= ircserv
 
-SRCDIR = src
-OBJDIR = obj
+CC			= g++ -std=c++98
+FLAGS		= -Wall -Wextra -Werror
 
-SRCS = main.cpp src/Server.cpp src/Client.cpp src/Channel.cpp src/SrvUtils.cpp src/ChUtils.cpp src/Commands/CommandParser.cpp \
-       src/Commands/PrivMsg.cpp src/Commands/Quit.cpp src/Commands/User.cpp src/Commands/Join.cpp \
-	   src/Commands/Part.cpp src/Commands/Mode.cpp src/Commands/Kick.cpp src/Commands/Notice.cpp \
-	   src/Commands/Pass.cpp src/Commands/Nick.cpp src/Commands/Cap.cpp src/Bot.cpp \
+SRC			=	main.cpp src/Server.cpp src/Client.cpp src/Channel.cpp src/SrvUtils.cpp src/ChUtils.cpp src/Commands/CommandParser.cpp \
+				src/Commands/PrivMsg.cpp src/Commands/Quit.cpp src/Commands/User.cpp src/Commands/Join.cpp \
+				src/Commands/Part.cpp src/Commands/Mode.cpp src/Commands/Kick.cpp src/Commands/Notice.cpp \
+				src/Commands/Pass.cpp src/Commands/Nick.cpp src/Commands/Cap.cpp src/Bot.cpp \
 
-OBJS = $(patsubst $(SRCDIR)/%.cpp, $(OBJDIR)/%.o, $(SRCS))
+OBJ			= $(SRC:src/%.cpp=obj/%.o)
+#OBJCOM		= $(SRC:src/Commands/%.cpp=obj/%.o)
 
-all: $(OBJDIR) $(NAME)
+all			: $(NAME)
 
-$(OBJDIR)/%.o: $(SRCDIR)/%.cpp
+$(NAME)		: obj $(OBJ)
+	$(CC) $(FLAGS) obj/*.o obj/Commands/*.o main.cpp -o $(NAME)
+
+obj			:
+	mkdir -p obj
+	mkdir -p obj/Commands
+
+obj/%.o		: src/%.cpp
 	$(CC) $(FLAGS) -c $< -o $@
 
-$(OBJDIR):
-	mkdir -p $(OBJDIR)
-	mkdir -p $(OBJDIR)/Commands
-
-$(NAME): $(OBJS)
-	$(CC) $(FLAGS) $(OBJS) -o $(NAME)
-
-clean:
-	rm -rf $(OBJDIR)
-
-fclean: clean
+clean		:
+	rm -rf log.log
+	rm -rf error.log
 	rm -rf $(NAME)
 
-re: fclean all
+fclean		: clean
+	rm -rf obj
 
-.PHONY: clean fclean all re
+re			: clean all

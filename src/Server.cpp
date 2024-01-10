@@ -20,10 +20,11 @@ Server::Server(int serverSocketFamily, int serverSocketProtocol, int serverSocke
 	// epoll(linux) veya kqueue(BSD) için istemci isteklerini dinlemek için bir dosya tanımlayıcısı oluşturulur.
 	memset(&serverAddress, 0, sizeof(serverAddress));
 
-	epollFd = epoll_create1(0);
-	if (epollFd == -1) {
-	}
+	FD_ZERO(&read_set);
 
+	// epollFd = epoll_create1(0);
+	// if (epollFd == -1) {
+	// }
 }
 
 // Server nesnesinin yıkıcısı.
@@ -47,10 +48,13 @@ Server::~Server()
 	if (_serverSocketFD != -1)
 		close(_serverSocketFD);
 
-	if (epollFd != -1)
-	{
-		close(epollFd);
-	}
+	// if (epollFd != -1)
+	// {
+	// 	close(epollFd);
+	// }
+
+	FD_ZERO(&read_set);
+
 	if (_bot != NULL){
 		delete _bot;
 	}
@@ -126,14 +130,16 @@ void Server::socketListen()
 		ErrorLogger(FAILED_SOCKET_LISTEN, __FILE__, __LINE__);
 	}
 
-	struct epoll_event ev;
-	ev.events = EPOLLIN;
-	ev.data.fd = _serverSocketFD;
+	FD_SET(_serverSocketFD, &read_set);
 
-	if (epoll_ctl(epollFd, EPOLL_CTL_ADD, _serverSocketFD, &ev) == -1)
-	{
-		perror("epoll_ctl: server socket");
-	}
+	// struct epoll_event ev;
+	// ev.events = EPOLLIN;
+	// ev.data.fd = _serverSocketFD;
+
+	// if (epoll_ctl(epollFd, EPOLL_CTL_ADD, _serverSocketFD, &ev) == -1)
+	// {
+	// 	perror("epoll_ctl: server socket");
+	// }
 }
 
 // Yeni bir istemci bağlantısını kabul eder.
@@ -172,16 +178,17 @@ int Server::socketAccept()
 		ErrorLogger(FAILED_SOCKET_OPTIONS, __FILE__, __LINE__);
 	}
 
+	//FD_SET(clientSocketFD, &read_set);
 
-	struct epoll_event event;
-	event.data.fd = clientSocketFD;
-	event.events = EPOLLIN | EPOLLET;
+	// struct epoll_event event;
+	// event.data.fd = clientSocketFD;
+	// event.events = EPOLLIN | EPOLLET;
 
-	if (epoll_ctl(epollFd, EPOLL_CTL_ADD, clientSocketFD, &event) == -1)
-	{
-		close(clientSocketFD);
-		ErrorLogger(FAILED_SOCKET_EPOLL_CTL, __FILE__, __LINE__);
-	}
+	// if (epoll_ctl(epollFd, EPOLL_CTL_ADD, clientSocketFD, &event) == -1)
+	// {
+	// 	close(clientSocketFD);
+	// 	ErrorLogger(FAILED_SOCKET_EPOLL_CTL, __FILE__, __LINE__);
+	// }
 
 	char hostname[NI_MAXHOST];
 	if (inet_ntop(AF_INET, &(((struct sockaddr_in *)&clientAddress)->sin_addr), hostname, sizeof(hostname)) == NULL)
@@ -218,14 +225,16 @@ void Server::serverRun()
 	{
 		_bot = new Bot("localhost", _serverSocketPort, _serverPass);
 
-		struct epoll_event ev;
-		ev.events = EPOLLIN;
-		ev.data.fd = _bot->getSocket();
+		FD_SET(_bot->getSocket(), &read_set);
 
-		if (epoll_ctl(epollFd, EPOLL_CTL_ADD, _bot->getSocket(), &ev) == -1)
-		{
-			perror("epoll_ctl: Bot socket");
-		}
+		// struct epoll_event ev;
+		// ev.events = EPOLLIN;
+		// ev.data.fd = _bot->getSocket();
+
+		// if (epoll_ctl(epollFd, EPOLL_CTL_ADD, _bot->getSocket(), &ev) == -1)
+		// {
+		// 	perror("epoll_ctl: Bot socket");
+		// }
 
 	}
 	catch (const std::exception &e)
@@ -239,23 +248,50 @@ void Server::serverRun()
 	// Ana döngü, kqueue ile olayları dinler.
 	while (true)
 	{
-		struct epoll_event events[MAX_CLIENTS];
-		int n = epoll_wait(epollFd, events, MAX_CLIENTS, -1);
-		for (int i = 0; i < n; i++) {
-			if (events[i].data.fd == _serverSocketFD) {
-				int clientFD = socketAccept();
-				if (clientFD != -1) {
-					// Maksimum istemci sayısını kontrol et.
-					// Eğer maksimum sayıya ulaşılmışsa bağlantıyı kapat.
-				}
-			} 
-			else 
+		int max_fd = _bot->getSocket();
+		int n = 0;
+		FD_ZERO(&read_set);
+		FD_SET(_serverSocketFD, &read_set);
+		for (map<int, Client*>::iterator it = _clients.begin(); it != _clients.end(); it++)
+		{
+			FD_SET((*it).second->getClientSocketFD(), &read_set);
+			max_fd = std::max(max_fd, (*it).second->getClientSocketFD());
+		}
+		n = select(max_fd + 1, &read_set, NULL, NULL, NULL);
+		if (n) 
+		{
+			if (FD_ISSET(_serverSocketFD, &read_set))
+				socketAccept();
+			for (map<int, Client*>::iterator it = _clients.begin(); it != _clients.end(); it++)
 			{
-				
-				if (events[i].events & EPOLLIN) {
-					handleClient(events[i].data.fd);
-				}
+				if (FD_ISSET((*it).second->getClientSocketFD(), &read_set))
+					handleClient((*it).first);
 			}
+			if (FD_ISSET(_bot->getSocket(), &read_set))
+				_bot->listen();
 		}
 	}
+
+
+
+
+
+	// struct epoll_event events[MAX_CLIENTS];
+	// int n = epoll_wait(epollFd, events, MAX_CLIENTS, -1);
+	// for (int i = 0; i < n; i++) {
+	// 	if (events[i].data.fd == _serverSocketFD) {
+	// 		int clientFD = socketAccept();
+	// 		if (clientFD != -1) {
+	// 			// Maksimum istemci sayısını kontrol et.
+	// 			// Eğer maksimum sayıya ulaşılmışsa bağlantıyı kapat.
+	// 		}
+	// 	} 
+	// 	else 
+	// 	{
+			
+	// 		if (events[i].events & EPOLLIN) {
+	// 			handleClient(events[i].data.fd);
+	// 		}
+	// 	}
+	// }
 }

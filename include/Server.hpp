@@ -5,7 +5,8 @@
 #include <sys/socket.h>
 #include <netdb.h>
 #include <arpa/inet.h>
-#include <sys/epoll.h>
+//#include <sys/epoll.h>
+#include <sys/select.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdio.h>
@@ -18,7 +19,6 @@
 #include "Channel.hpp"
 #include "Commands.hpp"
 #include <sstream>
-
 
 class Client;
 class Channel;
@@ -41,7 +41,8 @@ class Server
 
 		struct sockaddr_in serverAddress;
 
-		int epollFd;
+		//int epollFd;
+		fd_set read_set;
 
 		map<int, Client> clientBuffers;
 		map<int, Client*> _clients;

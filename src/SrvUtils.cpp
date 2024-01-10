@@ -36,35 +36,29 @@ void Server::processPartialCommands(int clientSocketFD)
 // İstemci soket dosya tanımlayıcısını alır ve isteği işler.
 void Server::handleClient(int clientSocketFD)
 {
-	if (clientSocketFD == _bot->getSocket())
-	{
-		// Bot'un soketi dinlenir.
-		_bot->listen();
-	}
-	else
-	{
- 		const size_t BUFFER_SIZE = 512;
-		char tempBuffer[BUFFER_SIZE];
-		memset(tempBuffer, 0, BUFFER_SIZE);
+	const size_t BUFFER_SIZE = 512;
+	char tempBuffer[BUFFER_SIZE];
+	memset(tempBuffer, 0, BUFFER_SIZE);
 
-		// İstemciden gelen veriyi okur.
-		ssize_t received = recv(clientSocketFD, tempBuffer, BUFFER_SIZE - 1, 0);
-		if (received > 0) {
-			// Gelen veriyi istemci tamponuna ekler ve kısmi komutları işler.
-			clientBuffers[clientSocketFD].appendtoBuffer(string(tempBuffer, received));
-			cout << "Received: " << tempBuffer << endl;
-			processPartialCommands(clientSocketFD);
-		} else if (received == 0 || errno == ECONNRESET) {
-			// İstemci bağlantısı kapatıldıysa veya hata durumunda
-			clientDisconnect(clientSocketFD);
+	// İstemciden gelen veriyi okur.
+	ssize_t received = recv(clientSocketFD, tempBuffer, BUFFER_SIZE - 1, 0);
+	if (received > 0) {
+		// Gelen veriyi istemci tamponuna ekler ve kısmi komutları işler.
+		clientBuffers[clientSocketFD].appendtoBuffer(string(tempBuffer, received));
+		cout << "Received: " << tempBuffer << endl;
+		processPartialCommands(clientSocketFD);
+	} else if (received == 0 || errno == ECONNRESET) {
+		// İstemci bağlantısı kapatıldıysa veya hata durumunda
+		FD_CLR(clientSocketFD, &read_set);
+		clientDisconnect(clientSocketFD);
+		clientBuffers.erase(clientSocketFD);
+	} else {
+		if (errno != EAGAIN && errno != EWOULDBLOCK) {
+			// Hata durumunda
+			FD_CLR(clientSocketFD, &read_set);
+			ErrorLogger("recv error", __FILE__, __LINE__);
+			close(clientSocketFD);
 			clientBuffers.erase(clientSocketFD);
-		} else {
-			if (errno != EAGAIN && errno != EWOULDBLOCK) {
-				// Hata durumunda
-				ErrorLogger("recv error", __FILE__, __LINE__);
-				close(clientSocketFD);
-				clientBuffers.erase(clientSocketFD);
-			}
 		}
 	}
 }
@@ -91,7 +85,7 @@ void Server::clientDisconnect(int clientSocketFD)
         messageStreamDisconnect << "Client " << it->second->getNickName() << " has disconnected.";
         log(messageStreamDisconnect.str());
 
-        epoll_ctl(epollFd, EPOLL_CTL_DEL, clientSocketFD, NULL);
+        FD_CLR(clientSocketFD, &read_set);
 
      // İstemci soketi kapatılır ve bellekten temizlenir.
         close(clientSocketFD);
@@ -153,9 +147,8 @@ void Server::shutdownSrv()
 		_bot = NULL;
 	}
 
-	if (epollFd != -1) {
-		close(epollFd);
- 	}
+	FD_ZERO(&read_set);
+
 	// Bellekte sızıntı kontrolü yapılır.
 	system("leaks ircserv");
 	string outmessage2 = "Sunucu kapatıldı.\n";
