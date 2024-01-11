@@ -225,7 +225,7 @@ void Server::serverRun()
 	{
 		_bot = new Bot("localhost", _serverSocketPort, _serverPass);
 
-		FD_SET(_bot->getSocket(), &read_set);
+		//FD_SET(_bot->getSocket(), &read_set);
 
 		// struct epoll_event ev;
 		// ev.events = EPOLLIN;
@@ -252,6 +252,7 @@ void Server::serverRun()
 		int n = 0;
 		FD_ZERO(&read_set);
 		FD_SET(_serverSocketFD, &read_set);
+		FD_SET(_bot->getSocket(), &read_set);
 		for (map<int, Client*>::iterator it = _clients.begin(); it != _clients.end(); it++)
 		{
 			FD_SET((*it).second->getClientSocketFD(), &read_set);
@@ -267,9 +268,9 @@ void Server::serverRun()
 				if (FD_ISSET((*it).second->getClientSocketFD(), &read_set))
 					handleClient((*it).first);
 			}
-			if (FD_ISSET(_bot->getSocket(), &read_set))
-				_bot->listen();
 		}
+		if (FD_ISSET(_bot->getSocket(), &read_set))
+			_bot->listen();
 	}
 
 

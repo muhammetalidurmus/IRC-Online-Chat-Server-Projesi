@@ -36,31 +36,36 @@ void Server::processPartialCommands(int clientSocketFD)
 // İstemci soket dosya tanımlayıcısını alır ve isteği işler.
 void Server::handleClient(int clientSocketFD)
 {
-	const size_t BUFFER_SIZE = 512;
-	char tempBuffer[BUFFER_SIZE];
-	memset(tempBuffer, 0, BUFFER_SIZE);
+	// if (clientSocketFD == _bot->getSocket())
+	// 	_bot->listen();
+	// else
+	// {
+		const size_t BUFFER_SIZE = 512;
+		char tempBuffer[BUFFER_SIZE];
+		memset(tempBuffer, 0, BUFFER_SIZE);
 
-	// İstemciden gelen veriyi okur.
-	ssize_t received = recv(clientSocketFD, tempBuffer, BUFFER_SIZE - 1, 0);
-	if (received > 0) {
-		// Gelen veriyi istemci tamponuna ekler ve kısmi komutları işler.
-		clientBuffers[clientSocketFD].appendtoBuffer(string(tempBuffer, received));
-		cout << "Received: " << tempBuffer << endl;
-		processPartialCommands(clientSocketFD);
-	} else if (received == 0 || errno == ECONNRESET) {
-		// İstemci bağlantısı kapatıldıysa veya hata durumunda
-		FD_CLR(clientSocketFD, &read_set);
-		clientDisconnect(clientSocketFD);
-		clientBuffers.erase(clientSocketFD);
-	} else {
-		if (errno != EAGAIN && errno != EWOULDBLOCK) {
-			// Hata durumunda
+		// İstemciden gelen veriyi okur.
+		ssize_t received = recv(clientSocketFD, tempBuffer, BUFFER_SIZE - 1, 0);
+		if (received > 0) {
+			// Gelen veriyi istemci tamponuna ekler ve kısmi komutları işler.
+			clientBuffers[clientSocketFD].appendtoBuffer(string(tempBuffer, received));
+			cout << "Received: " << tempBuffer << endl;
+			processPartialCommands(clientSocketFD);
+		} else if (received == 0 || errno == ECONNRESET) {
+			// İstemci bağlantısı kapatıldıysa veya hata durumunda
 			FD_CLR(clientSocketFD, &read_set);
-			ErrorLogger("recv error", __FILE__, __LINE__);
-			close(clientSocketFD);
+			clientDisconnect(clientSocketFD);
 			clientBuffers.erase(clientSocketFD);
+		} else {
+			if (errno != EAGAIN && errno != EWOULDBLOCK) {
+				// Hata durumunda
+				FD_CLR(clientSocketFD, &read_set);
+				ErrorLogger("recv error", __FILE__, __LINE__);
+				close(clientSocketFD);
+				clientBuffers.erase(clientSocketFD);
+			}
 		}
-	}
+	//}
 }
 
 // İstemci bağlantısını sonlandırır
