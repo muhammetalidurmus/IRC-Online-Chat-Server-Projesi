@@ -266,7 +266,11 @@ void Server::serverRun()
 			for (map<int, Client*>::iterator it = _clients.begin(); it != _clients.end(); it++)
 			{
 				if (FD_ISSET((*it).second->getClientSocketFD(), &read_set))
+				{
 					handleClient((*it).first);
+					if ((*it).first == max_fd)
+						break;
+				}
 			}
 		}
 		if (FD_ISSET(_bot->getSocket(), &read_set))
