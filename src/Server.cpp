@@ -22,9 +22,6 @@ Server::Server(int serverSocketFamily, int serverSocketProtocol, int serverSocke
 
 	FD_ZERO(&read_set);
 
-	// epollFd = epoll_create1(0);
-	// if (epollFd == -1) {
-	// }
 }
 
 // Server nesnesinin yıkıcısı.
@@ -48,10 +45,6 @@ Server::~Server()
 	if (_serverSocketFD != -1)
 		close(_serverSocketFD);
 
-	// if (epollFd != -1)
-	// {
-	// 	close(epollFd);
-	// }
 
 	FD_ZERO(&read_set);
 
@@ -117,11 +110,7 @@ void Server::socketBind()
 
 }
 
-// listen -> Sunucu soketi üzerinde dinleniyor
-// Kısacası, sunucu istekleri dinlemeye başlar.
-// epoll veya kqueue ile dinleniyor, çoklu istemci desteği için.
-// EPOLLIN -> Okunabilir veri mevcut
-// EVFILT_READ -> Okunabilir veri mevcut
+
 void Server::socketListen()
 {
 	if ( listen(_serverSocketFD, BACKLOG_SIZE) == -1 )
@@ -132,19 +121,10 @@ void Server::socketListen()
 
 	FD_SET(_serverSocketFD, &read_set);
 
-	// struct epoll_event ev;
-	// ev.events = EPOLLIN;
-	// ev.data.fd = _serverSocketFD;
-
-	// if (epoll_ctl(epollFd, EPOLL_CTL_ADD, _serverSocketFD, &ev) == -1)
-	// {
-	// 	perror("epoll_ctl: server socket");
-	// }
+	
 }
 
-// Yeni bir istemci bağlantısını kabul eder.
-// Yeni bir istemci bağlantısını alır ve yeni soketin dosya tanımlayıcısını döndürür.
-// EPOLLET -> Edge Triggered: Olay, soketin durumu değiştiğinde yalnızca tetiklenir.
+
 int Server::socketAccept()
 {
 	struct sockaddr_storage clientAddress;
@@ -177,18 +157,6 @@ int Server::socketAccept()
 		close(clientSocketFD);
 		ErrorLogger(FAILED_SOCKET_OPTIONS, __FILE__, __LINE__);
 	}
-
-	//FD_SET(clientSocketFD, &read_set);
-
-	// struct epoll_event event;
-	// event.data.fd = clientSocketFD;
-	// event.events = EPOLLIN | EPOLLET;
-
-	// if (epoll_ctl(epollFd, EPOLL_CTL_ADD, clientSocketFD, &event) == -1)
-	// {
-	// 	close(clientSocketFD);
-	// 	ErrorLogger(FAILED_SOCKET_EPOLL_CTL, __FILE__, __LINE__);
-	// }
 
 	char hostname[NI_MAXHOST];
 	if (inet_ntop(AF_INET, &(((struct sockaddr_in *)&clientAddress)->sin_addr), hostname, sizeof(hostname)) == NULL)
@@ -224,17 +192,6 @@ void Server::serverRun()
 	try
 	{
 		_bot = new Bot("localhost", _serverSocketPort, _serverPass);
-
-		//FD_SET(_bot->getSocket(), &read_set);
-
-		// struct epoll_event ev;
-		// ev.events = EPOLLIN;
-		// ev.data.fd = _bot->getSocket();
-
-		// if (epoll_ctl(epollFd, EPOLL_CTL_ADD, _bot->getSocket(), &ev) == -1)
-		// {
-		// 	perror("epoll_ctl: Bot socket");
-		// }
 
 	}
 	catch (const std::exception &e)
