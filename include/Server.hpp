@@ -5,7 +5,6 @@
 #include <sys/socket.h>
 #include <netdb.h>
 #include <arpa/inet.h>
-//#include <sys/epoll.h>
 #include <sys/select.h>
 #include <fcntl.h>
 #include <unistd.h>
@@ -41,7 +40,6 @@ class Server
 
 		struct sockaddr_in serverAddress;
 
-		//int epollFd;
 		fd_set read_set;
 
 		map<int, Client> clientBuffers;

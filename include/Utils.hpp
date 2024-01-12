@@ -30,12 +30,7 @@ using namespace std;
 #define FAILED_SOCKET_CLOSE "Failed to close socket"
 #define FAILED_SOCKET_GETADDRINFO "Failed to getaddrinfo socket"
 #define FAILED_SOCKET_DOMAIN "Not supported domain"
-#define FAILED_SOCKET_POLL "Failed to poll socket"
 #define FAILED_SOCKET_RECEIVE "Failed to receive socket"
-#define FAILED_SOCKET_EPOLL "Failed to create epoll"
-#define FAILED_SOCKET_EPOLL_CTL "Failed to add socket to epoll"
-#define FAILED_SOCKET_KQUEUE "Failed to create kqueue"
-#define FAILED_SOCKET_KQUEUE_KEVENT "Failed to add socket to kqueue"
 
 /* SERVER DEFINE */
 #define BACKLOG_SIZE 100

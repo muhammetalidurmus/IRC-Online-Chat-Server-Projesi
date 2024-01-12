@@ -2,7 +2,6 @@
 #define CLIENT_HPP
 
 #include <sys/socket.h>
-//#include <sys/epoll.h>
 #include <algorithm>
 #include <string>
 #include <vector>

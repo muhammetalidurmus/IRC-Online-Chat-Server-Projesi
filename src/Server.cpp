@@ -17,7 +17,6 @@ Server::Server(int serverSocketFamily, int serverSocketProtocol, int serverSocke
 	signal(SIGINT, signalHandler);
 	Server::setInstance(this);	// Singleton
 
-	// epoll(linux) veya kqueue(BSD) için istemci isteklerini dinlemek için bir dosya tanımlayıcısı oluşturulur.
 	memset(&serverAddress, 0, sizeof(serverAddress));
 
 	FD_ZERO(&read_set);
@@ -179,7 +178,7 @@ int Server::socketAccept()
 
 	return clientSocketFD;
 }
-// Mevcut bağlantıları dinler ve yeni bağlantıları `epoll` veya `kqueue` ile kabul eder.
+// Mevcut bağlantıları dinler 
 // Yeni istemci bağlanır ve maksimum istemci sayısını kontrol eder.
 // Bot oluşturulur ve dinlenir.
 void Server::serverRun()
@@ -202,7 +201,7 @@ void Server::serverRun()
 		write(STDOUT_FILENO, e.what(), strlen(e.what()));
 	}
 
-	// Ana döngü, kqueue ile olayları dinler.
+	// Ana döngü olayları dinler.
 	while (true)
 	{
 		int max_fd = _bot->getSocket();

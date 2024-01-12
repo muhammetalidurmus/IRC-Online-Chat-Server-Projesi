@@ -40,10 +40,6 @@ void Server::processPartialCommands(int clientSocketFD)
 // İstemci soket dosya tanımlayıcısını alır ve isteği işler.
 void Server::handleClient(int clientSocketFD)
 {
-	// if (clientSocketFD == _bot->getSocket())
-	// 	_bot->listen();
-	// else
-	// {
 		const size_t BUFFER_SIZE = 512;
 		char tempBuffer[BUFFER_SIZE];
 		memset(tempBuffer, 0, BUFFER_SIZE);
@@ -159,7 +155,7 @@ void Server::shutdownSrv()
 	FD_ZERO(&read_set);
 
 	// Bellekte sızıntı kontrolü yapılır.
-	system("leaks ircserv");
+	//system("leaks ircserv"); //control c yapınca leaks bilgisi görmek istiyorsanız bunu açın
 	string outmessage2 = "Sunucu kapatıldı.\n";
 	write(STDOUT_FILENO, outmessage2.c_str(), outmessage2.size());
 }
