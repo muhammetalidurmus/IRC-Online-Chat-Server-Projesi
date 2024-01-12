@@ -18,6 +18,8 @@ void Server::processPartialCommands(int clientSocketFD)
 			// Komutu işleyen CommandParser sınıfı kullanılır.
 			CommandParser::commandParser(command.c_str(), _clients[clientSocketFD], this);
 		}
+		
+		clientBuffer.clear();
 	}
 		
 	else
