@@ -174,64 +174,33 @@ fcntl(sock, F_SETFL, O_NONBLOCK);
 <br />
 
 ```cpp
-int kq = kqueue();
+select(max_fd + 1, &read_set, NULL, NULL, NULL);
 ```
-- `kqueue` fonksiyonu, BSD tabanlı işletim sistemlerinde (örneğin, FreeBSD, macOS) olayları izlemek ve yönetmek için kullanılan bir mekanizma olan kuyruk (event queue) oluşturur. Bu kuyruk, kevent sistem çağrısı tarafından yönetilir ve farklı olay türlerini takip etmek için kullanılır.
+- `select` select fonksiyonu, çoklu giriş/çıkış işlemlerini takip etmek için kullanılan bir sistem çağrısıdır. Temel olarak, bir veya birden fazla file descriptor (dosya tanımlayıcısı) üzerindeki olayları (okuma, yazma, hata gibi) kontrol etmek ve bu olaylara yanıt olarak bir eylem gerçekleştirmek amacıyla kullanılır.
+
+<br />
+
+- `nfds:` İzlenen file descriptor'ların toplam sayısı artı 1.
+- `readfds:` Okuma olaylarını izlemek için bir set.
+- `writefds:` Yazma olaylarını izlemek için bir set.
+- `exceptfds:` İstisna olaylarını izlemek için bir set.
+- `timeout:` Fonksiyonun beklemesini maksimum ne kadar süreyle sürdüreceğini belirten bir zaman aralığı.
 
 <br />
 
 ```cpp
-kevent(kq, &evSet, 1, NULL, 0, NULL);
-// Sistem çağrısını kullanarak belirli bir olayı kuyruğa eklemek için kullanılır.
+FD_ZERO(&read_set);
+FD_SET(_serverSocketFD, &read_set);
+FD_ISSET(_serverSocketFD, &read_set)
+FD_CLR(clientSocketFD, &read_set);
 ```
-- `kq` Olay kuyruğunun dosya tanıtıcısıdır. Bu, kqueue çağrısı ile oluşturulan bir kuyruğun dosya tanıtıcısıdır. Olaylar bu kuyruk üzerinden izlenecek ve işlenecektir.
+- `FD_ZERO` makrosu, bir file descriptor setini (dosya tanımlayıcı kümesini) boşaltmak için kullanılır.
 
-- `&evSet` Bir struct kevent yapısının adresidir. Bu, kuyruğa eklenmek istenen olayı tanımlayan yapıdır. Önceki örnekte EV_SET makrosu ile doldurulan bu yapı, izlenen olayın özelliklerini içerir.
+- `FD_SET` makrosu, bir file descriptor setine (dosya tanımlayıcı kümesine) belirli bir file descriptor'ı eklemek için kullanılır. File descriptor setleri, genellikle çoklu giriş/çıkış işlemlerini izlemek veya beklemek amacıyla kullanılır
 
-- `1` changelist parametresindeki değişikliklerin sayısını belirtir. Bu durumda, sadece bir olay eklemeye çalışıyoruz, bu nedenle 1 olarak belirtilmiştir.
+- `FD_ISSET` makrosu, bir file descriptor setinde belirli bir file descriptor'ın bulunup bulunmadığını kontrol etmek için kullanılır. File descriptor setleri, genellikle çoklu giriş/çıkış işlemlerini izlemek veya beklemek amacıyla kullanılır
 
-- `NULL` eventlist parametresine geri dönen olayların bilgilerini içeren bir dizi verilir. Ancak, bu örnekte geri dönen olayları işlemek istemiyoruz, bu nedenle bu parametre NULL olarak bırakılmıştır.
-
-- `0` nevents parametresinde geri dönen olayların sayısını belirtir. Bu örnekte geri dönen olayları işlemek istemediğimiz için 0 olarak bırakılmıştır.
-
-- `NULL` timeout parametresidir. Bu, kevent işleminin belirli bir süre beklemesini sağlar. NULL olarak bırakıldığında, işlem olay gerçekleşene kadar bekler.
-
-Bu çağrı, belirtilen kqueue üzerinde tanımlanan olayı ekler. Eğer başarılı olursa, olay kuyruğa eklenmiş olur ve ilgili olay gerçekleştiğinde bu kuyruk kullanılarak bu olayı takip edebilir ve gerekli işlemleri gerçekleştirebilirsiniz.
-
-`struct kevent` yapısının ilgili alanları şu şekildedir:
-```cpp
-struct kevent {
-    uintptr_t ident;      // Olayın tanımlayıcısı (dosya tanımlayıcısı veya diğer özel değerler)
-    short     filter;     // Olay filtresi (EVFILT_READ, EVFILT_WRITE, vb.)
-    u_short   flags;      // Olayın özel işlem ayarları (EV_ADD, EV_DELETE, vb.)
-    u_int     fflags;     // Ek olay bayrakları (file flags)
-    intptr_t  data;       // Olaya özgü ek veri
-    void      *udata;     // Kullanıcı tarafından atanabilen ek veri
-};
-```
-<br />
-
-
-```cpp
-EV_SET(&evSet, _bot->getSocket(), EVFILT_READ, EV_ADD, 0, 0, NULL);
-// EV_SET makrosunu kullanarak struct kevent yapısını doldurur.
-```
-
-- `&evSet`: Bu, struct kevent yapısının adresini ifade eder. `EV_SET` makrosu, bu yapıyı doldurup kuyruğa eklemek için kullanılır.
-
-- `_bot->getSocket()`: Bu, izlenen olayın ilişkilendirildiği nesnenin tanıtıcısıdır. `_bot` nesnesinden alınan bir soket tanıtıcısıdır. Bu, izlenen olayın hangi dosya, soket veya nesne üzerinde gerçekleşeceğini belirtir.
-
-- `EVFILT_READ`: Bu, izlenen olay filtresini belirtir. `EVFILT_READ`, okuma olaylarını takip etmek için kullanılır. Yani, belirtilen soketin üzerinden okuma olayı gerçekleşirse, bu olay kuyruğa eklenir.
-
-- `EV_ADD`: Bu, izlenen olayın eklenmesini belirtir. Yani, bu olayın kuyruğa eklenmesi ve izlenmeye başlaması isteniyor. Ve `EV_DELETE`, `EV_ENABLE`, `EV_DISABLE` gibi bayrak değerleride kullanılabilir.
-
-- `0`: Bu, izlenen olayın filtre özelliklerini belirtir. Bu örnekte, bu değer sıfır olarak bırakılmıştır.
-
-- `0`: Bu, izlenen olayın veri kısmını belirtir. Bu örnekte, bu değer sıfır olarak bırakılmıştır.
-
-- `NULL`: Bu, izlenen olayla ilişkilendirilen kullanıcı verisini belirtir. Bu örnekte, herhangi bir ek kullanıcı verisi olmadığı için NULL olarak bırakılmıştır.
-
-Bu şekilde, `EV_SET` makrosu, struct kevent yapısını belirli bir olayı tanımlamak ve kuyruğa eklemek için kullanılır. Bu tanımlanan olay daha sonra kevent fonksiyonu aracılığıyla izlenmeye başlanır ve ilgili olay gerçekleştiğinde belirtilen işlemler yapılır.
+- `FD_CLR` makrosu, bir file descriptor setinden (dosya tanımlayıcı kümesinden) belirli bir file descriptor'ı çıkarmak için kullanılır. File descriptor setleri, genellikle çoklu giriş/çıkış işlemlerini izlemek veya beklemek amacıyla kullanılır
 
 
 <br />
