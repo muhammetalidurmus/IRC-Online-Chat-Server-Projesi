@@ -18,10 +18,10 @@ void Server::processPartialCommands(int clientSocketFD)
 			// Komutu işleyen CommandParser sınıfı kullanılır.
 			CommandParser::commandParser(command.c_str(), _clients[clientSocketFD], this);
 		}
-		
-		clientBuffer.clear();
+		if (!clientBuffer.find('\n'))
+			clientBuffer.clear();
 	}
-		
+
 	else
 	{
 		// Komutlar '\r\n' ile bitiyorsa
@@ -32,7 +32,6 @@ void Server::processPartialCommands(int clientSocketFD)
 			// Komutu işleyen CommandParser sınıfı kullanılır.
 			CommandParser::commandParser(command.c_str(), _clients[clientSocketFD], this);
 		}
-		
 		clientBuffer.clear();
 	}
 }
