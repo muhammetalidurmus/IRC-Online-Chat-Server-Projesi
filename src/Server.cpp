@@ -259,7 +259,7 @@ void Server::serverRun()
 			max_fd = std::max(max_fd, (*it).second->getClientSocketFD());
 		}
 		n = select(max_fd + 1, &read_set, NULL, NULL, NULL);
-		if (n) 
+		if (n)
 		{
 			if (FD_ISSET(_serverSocketFD, &read_set))
 				socketAccept();
@@ -267,36 +267,13 @@ void Server::serverRun()
 			{
 				if (FD_ISSET((*it).second->getClientSocketFD(), &read_set))
 				{
-					handleClient((*it).first);
-					if ((*it).first == max_fd)
-						break;
+					handleClient((*it).second->getClientSocketFD());
+					break;
 				}
+				
 			}
+			if (FD_ISSET(_bot->getSocket(), &read_set))
+				_bot->listen();
 		}
-		if (FD_ISSET(_bot->getSocket(), &read_set))
-			_bot->listen();
 	}
-
-
-
-
-
-	// struct epoll_event events[MAX_CLIENTS];
-	// int n = epoll_wait(epollFd, events, MAX_CLIENTS, -1);
-	// for (int i = 0; i < n; i++) {
-	// 	if (events[i].data.fd == _serverSocketFD) {
-	// 		int clientFD = socketAccept();
-	// 		if (clientFD != -1) {
-	// 			// Maksimum istemci sayısını kontrol et.
-	// 			// Eğer maksimum sayıya ulaşılmışsa bağlantıyı kapat.
-	// 		}
-	// 	} 
-	// 	else 
-	// 	{
-			
-	// 		if (events[i].events & EPOLLIN) {
-	// 			handleClient(events[i].data.fd);
-	// 		}
-	// 	}
-	// }
 }
