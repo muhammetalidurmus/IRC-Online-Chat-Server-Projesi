@@ -193,6 +193,7 @@ FD_ZERO(&read_set);
 FD_SET(_serverSocketFD, &read_set);
 FD_ISSET(_serverSocketFD, &read_set)
 FD_CLR(clientSocketFD, &read_set);
+
 ```
 - `FD_ZERO` makrosu, bir file descriptor setini (dosya tanımlayıcı kümesini) boşaltmak için kullanılır.
 
