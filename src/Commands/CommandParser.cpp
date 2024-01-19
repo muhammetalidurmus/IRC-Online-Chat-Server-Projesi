@@ -110,6 +110,8 @@ void CommandParser::handleCommand(Client *client, vector<string> commandParts, S
     {
         if (commandParts.at(0) == "/PRIVMSG" || commandParts.at(0) == "PRIVMSG")
             PrivMsg::privMsg(client, commandParts, srv);
+        else if (commandParts.at(0) == "/NOTICE" || commandParts.at(0) == "NOTICE")
+            Notice::notice(client, commandParts, srv);
         else if (commandParts.at(0) == "/JOIN" || commandParts.at(0) == "JOIN")
             Join::join(client, commandParts, srv);
         else if (commandParts.at(0) == "/QUIT" || commandParts.at(0) == "QUIT")
